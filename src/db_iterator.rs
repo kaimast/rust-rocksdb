@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{ffi, ColumnFamily, Error, ReadOptions, WriteBatch, DB};
+use crate::{ffi, ColumnFamily, Error, ReadOptions, DB};
 use libc::{c_char, c_uchar, size_t};
 use std::marker::PhantomData;
 use std::slice;
@@ -478,68 +478,5 @@ impl<'a> Iterator for DBIterator<'a> {
 impl<'a> Into<DBRawIterator<'a>> for DBIterator<'a> {
     fn into(self) -> DBRawIterator<'a> {
         self.raw
-    }
-}
-
-/// Iterates the batches of writes since a given sequence number.
-///
-/// `DBWALIterator` is returned by `DB::get_updates_since()` and will return the
-/// batches of write operations that have occurred since a given sequence number
-/// (see `DB::latest_sequence_number()`). This iterator cannot be constructed by
-/// the application.
-///
-/// The iterator item type is a tuple of (`u64`, `WriteBatch`) where the first
-/// value is the sequence number of the associated write batch.
-///
-pub struct DBWALIterator {
-    pub(crate) inner: *mut ffi::rocksdb_wal_iterator_t,
-}
-
-impl DBWALIterator {
-    /// Returns `true` if the iterator is valid. An iterator is invalidated when
-    /// it reaches the end of its defined range, or when it encounters an error.
-    ///
-    /// To check whether the iterator encountered an error after `valid` has
-    /// returned `false`, use the [`status`](DBWALIterator::status) method.
-    /// `status` will never return an error when `valid` is `true`.
-    pub fn valid(&self) -> bool {
-        unsafe { ffi::rocksdb_wal_iter_valid(self.inner) != 0 }
-    }
-
-    /// Returns an error `Result` if the iterator has encountered an error
-    /// during operation. When an error is encountered, the iterator is
-    /// invalidated and [`valid`](DBWALIterator::valid) will return `false` when
-    /// called.
-    pub fn status(&self) -> Result<(), Error> {
-        unsafe {
-            ffi_try!(ffi::rocksdb_wal_iter_status(self.inner));
-        }
-        Ok(())
-    }
-}
-
-impl Iterator for DBWALIterator {
-    type Item = (u64, WriteBatch);
-
-    fn next(&mut self) -> Option<(u64, WriteBatch)> {
-        // Seek to the next write batch.
-        unsafe {
-            ffi::rocksdb_wal_iter_next(self.inner);
-        }
-        if self.valid() {
-            let mut seq: u64 = 0;
-            let inner = unsafe { ffi::rocksdb_wal_iter_get_batch(self.inner, &mut seq) };
-            Some((seq, WriteBatch { inner }))
-        } else {
-            None
-        }
-    }
-}
-
-impl Drop for DBWALIterator {
-    fn drop(&mut self) {
-        unsafe {
-            ffi::rocksdb_wal_iter_destroy(self.inner);
-        }
     }
 }

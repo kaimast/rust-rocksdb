@@ -7,10 +7,11 @@
 [submodule "librocksdb-sys/zstd"]
 	path = librocksdb-silk-sys/zstd
 	url = https://github.com/facebook/zstd
-[submodule "librocksdb-sys/zlib"]
-	path = librocksdb-silk-sys/zlib
-	url = https://github.com/madler/zlib.git
 [submodule "librocksdb-silk-sys/rocksdb"]
 	path = librocksdb-silk-sys/rocksdb
 	url = https://github.com/kaimast/rocksdb-silk
+	branch = master
+[submodule "librocksdb-silk-sys/zlib"]
+	path = librocksdb-silk-sys/zlib
+	url = https://github.com/madler/zlib.git
 	branch = master

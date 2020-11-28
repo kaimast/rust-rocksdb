@@ -17,7 +17,7 @@ use crate::{
     ffi,
     ffi_util::{from_cstr, opt_bytes_to_ptr, raw_data, to_cpath},
     ColumnFamily, ColumnFamilyDescriptor, CompactOptions, DBIterator, DBPinnableSlice,
-    DBRawIterator, DBWALIterator, Direction, Error, FlushOptions, IngestExternalFileOptions,
+    DBRawIterator, Direction, Error, FlushOptions, IngestExternalFileOptions,
     IteratorMode, Options, ReadOptions, Snapshot, WriteBatch, WriteOptions,
     DEFAULT_COLUMN_FAMILY_NAME,
 };
@@ -32,7 +32,6 @@ use std::path::PathBuf;
 use std::ptr;
 use std::slice;
 use std::str;
-use std::time::Duration;
 
 /// A RocksDB database.
 ///
@@ -53,11 +52,9 @@ unsafe impl Send for DB {}
 unsafe impl Sync for DB {}
 
 // Specifies whether open DB for read only.
-enum AccessType<'a> {
+enum AccessType {
     ReadWrite,
-    ReadOnly { error_if_log_file_exist: bool },
-    Secondary { secondary_path: &'a Path },
-    WithTTL { ttl: Duration },
+    ReadOnly { error_if_log_file_exist: bool }
 }
 
 impl DB {
@@ -80,34 +77,6 @@ impl DB {
         error_if_log_file_exist: bool,
     ) -> Result<DB, Error> {
         DB::open_cf_for_read_only(opts, path, None::<&str>, error_if_log_file_exist)
-    }
-
-    /// Opens the database as a secondary.
-    pub fn open_as_secondary<P: AsRef<Path>>(
-        opts: &Options,
-        primary_path: P,
-        secondary_path: P,
-    ) -> Result<DB, Error> {
-        DB::open_cf_as_secondary(opts, primary_path, secondary_path, None::<&str>)
-    }
-
-    /// Opens the database with a Time to Live compaction filter.
-    pub fn open_with_ttl<P: AsRef<Path>>(
-        opts: &Options,
-        path: P,
-        ttl: Duration,
-    ) -> Result<DB, Error> {
-        let c_path = to_cpath(&path)?;
-        let db = DB::open_raw(opts, &c_path, &AccessType::WithTTL { ttl })?;
-        if db.is_null() {
-            return Err(Error::new("Could not initialize database.".to_owned()));
-        }
-
-        Ok(DB {
-            inner: db,
-            cfs: BTreeMap::new(),
-            path: path.as_ref().to_path_buf(),
-        })
     }
 
     /// Opens a database with the given database options and column family names.
@@ -148,32 +117,6 @@ impl DB {
             cfs,
             &AccessType::ReadOnly {
                 error_if_log_file_exist,
-            },
-        )
-    }
-
-    /// Opens the database as a secondary with the given database options and column family names.
-    pub fn open_cf_as_secondary<P, I, N>(
-        opts: &Options,
-        primary_path: P,
-        secondary_path: P,
-        cfs: I,
-    ) -> Result<DB, Error>
-    where
-        P: AsRef<Path>,
-        I: IntoIterator<Item = N>,
-        N: AsRef<str>,
-    {
-        let cfs = cfs
-            .into_iter()
-            .map(|name| ColumnFamilyDescriptor::new(name.as_ref(), Options::default()));
-
-        DB::open_cf_descriptors_internal(
-            opts,
-            primary_path,
-            cfs,
-            &AccessType::Secondary {
-                secondary_path: secondary_path.as_ref(),
             },
         )
     }
@@ -230,12 +173,12 @@ impl DB {
                 .map(|cf| CString::new(cf.name.as_bytes()).unwrap())
                 .collect();
 
-            let cfnames: Vec<_> = c_cfs.iter().map(|cf| cf.as_ptr()).collect();
+            let mut cfnames: Vec<_> = c_cfs.iter().map(|cf| cf.as_ptr()).collect();
 
             // These handles will be populated by DB.
             let mut cfhandles: Vec<_> = cfs_v.iter().map(|_| ptr::null_mut()).collect();
 
-            let cfopts: Vec<_> = cfs_v
+            let mut cfopts: Vec<_> = cfs_v
                 .iter()
                 .map(|cf| cf.options.inner as *const _)
                 .collect();
@@ -244,8 +187,8 @@ impl DB {
                 opts,
                 &cpath,
                 &cfs_v,
-                &cfnames,
-                &cfopts,
+                &mut cfnames,
+                &mut cfopts,
                 &mut cfhandles,
                 &access_type,
             )?;
@@ -290,18 +233,6 @@ impl DB {
                 AccessType::ReadWrite => {
                     ffi_try!(ffi::rocksdb_open(opts.inner, cpath.as_ptr() as *const _))
                 }
-                AccessType::Secondary { secondary_path } => {
-                    ffi_try!(ffi::rocksdb_open_as_secondary(
-                        opts.inner,
-                        cpath.as_ptr() as *const _,
-                        to_cpath(secondary_path)?.as_ptr() as *const _,
-                    ))
-                }
-                AccessType::WithTTL { ttl } => ffi_try!(ffi::rocksdb_open_with_ttl(
-                    opts.inner,
-                    cpath.as_ptr() as *const _,
-                    ttl.as_secs() as c_int,
-                )),
             }
         };
         Ok(db)
@@ -311,8 +242,8 @@ impl DB {
         opts: &Options,
         cpath: &CString,
         cfs_v: &[ColumnFamilyDescriptor],
-        cfnames: &[*const c_char],
-        cfopts: &[*const ffi::rocksdb_options_t],
+        cfnames: &mut [*const c_char],
+        cfopts: &mut [*const ffi::rocksdb_options_t],
         cfhandles: &mut Vec<*mut ffi::rocksdb_column_family_handle_t>,
         access_type: &AccessType,
     ) -> Result<*mut ffi::rocksdb_t, Error> {
@@ -324,8 +255,8 @@ impl DB {
                     opts.inner,
                     cpath.as_ptr(),
                     cfs_v.len() as c_int,
-                    cfnames.as_ptr(),
-                    cfopts.as_ptr(),
+                    cfnames.as_mut_ptr(),
+                    cfopts.as_mut_ptr(),
                     cfhandles.as_mut_ptr(),
                     error_if_log_file_exist as c_uchar,
                 )),
@@ -333,22 +264,10 @@ impl DB {
                     opts.inner,
                     cpath.as_ptr(),
                     cfs_v.len() as c_int,
-                    cfnames.as_ptr(),
-                    cfopts.as_ptr(),
+                    cfnames.as_mut_ptr(),
+                    cfopts.as_mut_ptr(),
                     cfhandles.as_mut_ptr(),
-                )),
-                AccessType::Secondary { secondary_path } => {
-                    ffi_try!(ffi::rocksdb_open_as_secondary_column_families(
-                        opts.inner,
-                        cpath.as_ptr() as *const _,
-                        to_cpath(secondary_path)?.as_ptr() as *const _,
-                        cfs_v.len() as c_int,
-                        cfnames.as_ptr(),
-                        cfopts.as_ptr(),
-                        cfhandles.as_mut_ptr(),
-                    ))
-                }
-                _ => return Err(Error::new("Unsupported access type".to_owned())),
+                ))
             }
         };
         Ok(db)
@@ -405,20 +324,6 @@ impl DB {
     /// Flushes database memtables to SST files on the disk using default options.
     pub fn flush(&self) -> Result<(), Error> {
         self.flush_opt(&FlushOptions::default())
-    }
-
-    /// Flushes database memtables to SST files on the disk for a given column family.
-    pub fn flush_cf_opt(&self, cf: &ColumnFamily, flushopts: &FlushOptions) -> Result<(), Error> {
-        unsafe {
-            ffi_try!(ffi::rocksdb_flush_cf(self.inner, flushopts.inner, cf.inner));
-        }
-        Ok(())
-    }
-
-    /// Flushes database memtables to SST files on the disk for a given column family using default
-    /// options.
-    pub fn flush_cf(&self, cf: &ColumnFamily) -> Result<(), Error> {
-        self.flush_cf_opt(cf, &FlushOptions::default())
     }
 
     pub fn write_opt(&self, batch: WriteBatch, writeopts: &WriteOptions) -> Result<(), Error> {
@@ -635,8 +540,7 @@ impl DB {
     }
 
     pub fn prefix_iterator<'a: 'b, 'b, P: AsRef<[u8]>>(&'a self, prefix: P) -> DBIterator<'b> {
-        let mut opts = ReadOptions::default();
-        opts.set_prefix_same_as_start(true);
+        let opts = ReadOptions::default();
         DBIterator::new(
             self,
             opts,
@@ -668,8 +572,7 @@ impl DB {
         cf_handle: &ColumnFamily,
         prefix: P,
     ) -> DBIterator<'b> {
-        let mut opts = ReadOptions::default();
-        opts.set_prefix_same_as_start(true);
+        let opts = ReadOptions::default();
         DBIterator::new_cf(
             self,
             cf_handle,
@@ -844,31 +747,6 @@ impl DB {
         }
     }
 
-    /// Removes the database entries in the range `["from", "to")` using given write options.
-    pub fn delete_range_cf_opt<K: AsRef<[u8]>>(
-        &self,
-        cf: &ColumnFamily,
-        from: K,
-        to: K,
-        writeopts: &WriteOptions,
-    ) -> Result<(), Error> {
-        let from = from.as_ref();
-        let to = to.as_ref();
-
-        unsafe {
-            ffi_try!(ffi::rocksdb_delete_range_cf(
-                self.inner,
-                writeopts.inner,
-                cf.inner,
-                from.as_ptr() as *const c_char,
-                from.len() as size_t,
-                to.as_ptr() as *const c_char,
-                to.len() as size_t,
-            ));
-            Ok(())
-        }
-    }
-
     pub fn put<K, V>(&self, key: K, value: V) -> Result<(), Error>
     where
         K: AsRef<[u8]>,
@@ -907,16 +785,6 @@ impl DB {
 
     pub fn delete_cf<K: AsRef<[u8]>>(&self, cf: &ColumnFamily, key: K) -> Result<(), Error> {
         self.delete_cf_opt(cf, key.as_ref(), &WriteOptions::default())
-    }
-
-    /// Removes the database entries in the range `["from", "to")` using default write options.
-    pub fn delete_range_cf<K: AsRef<[u8]>>(
-        &self,
-        cf: &ColumnFamily,
-        from: K,
-        to: K,
-    ) -> Result<(), Error> {
-        self.delete_range_cf_opt(cf, from, to, &WriteOptions::default())
     }
 
     /// Runs a manual compaction on the Range of keys given. This is not likely to be needed for typical usage.
@@ -1012,27 +880,6 @@ impl DB {
         unsafe {
             ffi_try!(ffi::rocksdb_set_options(
                 self.inner,
-                count,
-                cnames.as_ptr(),
-                cvalues.as_ptr(),
-            ));
-        }
-        Ok(())
-    }
-
-    pub fn set_options_cf(
-        &self,
-        cf_handle: &ColumnFamily,
-        opts: &[(&str, &str)],
-    ) -> Result<(), Error> {
-        let copts = convert_options(opts)?;
-        let cnames: Vec<*const c_char> = copts.iter().map(|opt| opt.0.as_ptr()).collect();
-        let cvalues: Vec<*const c_char> = copts.iter().map(|opt| opt.1.as_ptr()).collect();
-        let count = opts.len() as i32;
-        unsafe {
-            ffi_try!(ffi::rocksdb_set_options_cf(
-                self.inner,
-                cf_handle.inner,
                 count,
                 cnames.as_ptr(),
                 cvalues.as_ptr(),
@@ -1157,41 +1004,6 @@ impl DB {
         }
     }
 
-    /// The sequence number of the most recent transaction.
-    pub fn latest_sequence_number(&self) -> u64 {
-        unsafe { ffi::rocksdb_get_latest_sequence_number(self.inner) }
-    }
-
-    /// Iterate over batches of write operations since a given sequence.
-    ///
-    /// Produce an iterator that will provide the batches of write operations
-    /// that have occurred since the given sequence (see
-    /// `latest_sequence_number()`). Use the provided iterator to retrieve each
-    /// (`u64`, `WriteBatch`) tuple, and then gather the individual puts and
-    /// deletes using the `WriteBatch::iterate()` function.
-    ///
-    /// Calling `get_updates_since()` with a sequence number that is out of
-    /// bounds will return an error.
-    pub fn get_updates_since(&self, seq_number: u64) -> Result<DBWALIterator, Error> {
-        unsafe {
-            // rocksdb_wal_readoptions_t does not appear to have any functions
-            // for creating and destroying it; fortunately we can pass a nullptr
-            // here to get the default behavior
-            let opts: *const ffi::rocksdb_wal_readoptions_t = ptr::null();
-            let iter = ffi_try!(ffi::rocksdb_get_updates_since(self.inner, seq_number, opts));
-            Ok(DBWALIterator { inner: iter })
-        }
-    }
-
-    /// Tries to catch up with the primary by reading as much as possible from the
-    /// log files.
-    pub fn try_catch_up_with_primary(&self) -> Result<(), Error> {
-        unsafe {
-            ffi_try!(ffi::rocksdb_try_catch_up_with_primary(self.inner));
-        }
-        Ok(())
-    }
-
     /// Loads a list of external SST files created with SstFileWriter into the DB with default opts
     pub fn ingest_external_file<P: AsRef<Path>>(&self, paths: Vec<P>) -> Result<(), Error> {
         let opts = IngestExternalFileOptions::default();
@@ -1309,9 +1121,7 @@ impl DB {
                         size,
                         level,
                         start_key: smallest_key,
-                        end_key: largest_key,
-                        num_entries: ffi::rocksdb_livefiles_entries(files, i),
-                        num_deletions: ffi::rocksdb_livefiles_deletions(files, i),
+                        end_key: largest_key
                     })
                 }
 
@@ -1368,13 +1178,6 @@ impl DB {
             Ok(())
         }
     }
-
-    /// Request stopping background work, if wait is true wait until it's done.
-    pub fn cancel_all_background_work(&self, wait: bool) {
-        unsafe {
-            ffi::rocksdb_cancel_all_background_work(self.inner, wait as u8);
-        }
-    }
 }
 
 impl Drop for DB {
@@ -1407,10 +1210,6 @@ pub struct LiveFile {
     pub start_key: Option<Vec<u8>>,
     /// Largest user defined key in the file
     pub end_key: Option<Vec<u8>>,
-    /// Number of entries/alive keys in the file
-    pub num_entries: u64,
-    /// Number of deletions/tomb key(s) in the file
-    pub num_deletions: u64,
 }
 
 fn convert_options(opts: &[(&str, &str)]) -> Result<Vec<(CString, CString)>, Error> {

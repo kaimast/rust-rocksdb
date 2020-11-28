@@ -15,7 +15,7 @@
 
 use crate::{ffi, Error, DB};
 
-use libc::{c_int, c_uchar};
+use libc::{c_int};
 use std::ffi::CString;
 use std::path::Path;
 
@@ -78,26 +78,14 @@ impl BackupEngine {
     /// Note: no flush before backup is performed. User might want to
     /// use `create_new_backup_flush` instead.
     pub fn create_new_backup(&mut self, db: &DB) -> Result<(), Error> {
-        self.create_new_backup_flush(db, false)
-    }
-
-    /// Captures the state of the database in the latest backup.
-    ///
-    /// Set flush_before_backup=true to avoid losing unflushed key/value
-    /// pairs from the memtable.
-    pub fn create_new_backup_flush(
-        &mut self,
-        db: &DB,
-        flush_before_backup: bool,
-    ) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_backup_engine_create_new_backup_flush(
+            ffi_try!(ffi::rocksdb_backup_engine_create_new_backup(
                 self.inner,
-                db.inner,
-                flush_before_backup as c_uchar,
+                db.inner
             ));
             Ok(())
         }
+
     }
 
     pub fn purge_old_backups(&mut self, num_backups_to_keep: usize) -> Result<(), Error> {
@@ -166,22 +154,6 @@ impl BackupEngine {
                 c_db_dir.as_ptr(),
                 c_wal_dir.as_ptr(),
                 opts.inner,
-            ));
-        }
-        Ok(())
-    }
-
-    /// Checks that each file exists and that the size of the file matches our
-    /// expectations. it does not check file checksum.
-    ///
-    /// If this BackupEngine created the backup, it compares the files' current
-    /// sizes against the number of bytes written to them during creation.
-    /// Otherwise, it compares the files' current sizes against their sizes when
-    /// the BackupEngine was opened.
-    pub fn verify_backup(&self, backup_id: u32) -> Result<(), Error> {
-        unsafe {
-            ffi_try!(ffi::rocksdb_backup_engine_verify_backup(
-                self.inner, backup_id,
             ));
         }
         Ok(())

@@ -86,7 +86,6 @@ mod db_iterator;
 mod db_options;
 mod db_pinnable_slice;
 pub mod merge_operator;
-pub mod perf;
 mod slice_transform;
 mod snapshot;
 mod sst_file_writer;
@@ -96,7 +95,7 @@ pub use crate::{
     column_family::{ColumnFamily, ColumnFamilyDescriptor, DEFAULT_COLUMN_FAMILY_NAME},
     compaction_filter::Decision as CompactionDecision,
     db::{LiveFile, DB},
-    db_iterator::{DBIterator, DBRawIterator, DBWALIterator, Direction, IteratorMode},
+    db_iterator::{DBIterator, DBRawIterator, Direction, IteratorMode},
     db_options::{
         BlockBasedIndexType, BlockBasedOptions, BottommostLevelCompaction, Cache, CompactOptions,
         DBCompactionStyle, DBCompressionType, DBPath, DBRecoveryMode, DataBlockIndexType, Env,
@@ -106,14 +105,13 @@ pub use crate::{
     },
     db_pinnable_slice::DBPinnableSlice,
     merge_operator::MergeOperands,
-    perf::{PerfContext, PerfMetric, PerfStatsLevel},
     slice_transform::SliceTransform,
     snapshot::Snapshot,
     sst_file_writer::SstFileWriter,
     write_batch::{WriteBatch, WriteBatchIterator},
 };
 
-use librocksdb_sys as ffi;
+use librocksdb_silk_sys as ffi;
 
 use std::error;
 use std::fmt;

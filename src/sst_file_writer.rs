@@ -90,13 +90,13 @@ impl<'a> SstFileWriter<'a> {
             Ok(())
         }
     }
-
+/*
     /// returns the current file size
     pub fn file_size(&self) -> u64 {
         let mut file_size: u64 = 0;
         unsafe { ffi::rocksdb_sstfilewriter_file_size(self.inner, &mut file_size) };
         file_size
-    }
+    }*/
 
     /// Adds a Put key with value to currently opened file
     /// REQUIRES: key is after any previously added key according to comparator.
