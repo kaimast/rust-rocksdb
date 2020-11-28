@@ -1,15 +1,16 @@
 [submodule "rocksdb_sys/snappy"]
-	path = librocksdb-sys/snappy
+	path = librocksdb-silk-sys/snappy
 	url = https://github.com/google/snappy.git
-[submodule "rocksdb_sys/rocksdb"]
-	path = librocksdb-sys/rocksdb
-	url = https://github.com/facebook/rocksdb.git
 [submodule "librocksdb-sys/lz4"]
-	path = librocksdb-sys/lz4
+	path = librocksdb-silk-sys/lz4
 	url = https://github.com/lz4/lz4.git
 [submodule "librocksdb-sys/zstd"]
-	path = librocksdb-sys/zstd
+	path = librocksdb-silk-sys/zstd
 	url = https://github.com/facebook/zstd
 [submodule "librocksdb-sys/zlib"]
-	path = librocksdb-sys/zlib
+	path = librocksdb-silk-sys/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "librocksdb-silk-sys/rocksdb"]
+	path = librocksdb-silk-sys/rocksdb
+	url = https://github.com/kaimast/rocksdb-silk
+	branch = master
