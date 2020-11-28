@@ -16,7 +16,7 @@ mod util;
 
 use pretty_assertions::assert_eq;
 
-use rocksdb::{
+use rocksdb_silk::{
     backup::{BackupEngine, BackupEngineOptions, RestoreOptions},
     DB,
 };
@@ -42,7 +42,6 @@ fn backup_restore() {
             let info = backup_engine.get_backup_info();
             assert!(!info.is_empty());
             info.iter().for_each(|i| {
-                assert!(backup_engine.verify_backup(i.backup_id).is_ok());
                 assert!(i.size > 0);
             });
 

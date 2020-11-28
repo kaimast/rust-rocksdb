@@ -16,7 +16,7 @@ mod util;
 
 use pretty_assertions::assert_eq;
 
-use rocksdb::{Direction, IteratorMode, MemtableFactory, Options, DB};
+use rocksdb_silk::{Direction, IteratorMode, MemtableFactory, Options, DB};
 use util::DBPath;
 
 fn cba(input: &[u8]) -> Box<[u8]> {
@@ -182,7 +182,7 @@ fn test_prefix_iterator() {
         let b1: Box<[u8]> = key(b"bbb1");
         let b2: Box<[u8]> = key(b"bbb2");
 
-        let prefix_extractor = rocksdb::SliceTransform::create_fixed_prefix(3);
+        let prefix_extractor = rocksdb_silk::SliceTransform::create_fixed_prefix(3);
 
         let mut opts = Options::default();
         opts.create_if_missing(true);
@@ -232,7 +232,7 @@ fn test_prefix_iterator_uses_full_prefix() {
             ([2, 2, 2, 2], b"888"),
         ];
 
-        let prefix_extractor = rocksdb::SliceTransform::create_fixed_prefix(1);
+        let prefix_extractor = rocksdb_silk::SliceTransform::create_fixed_prefix(1);
 
         let mut opts = Options::default();
         opts.create_if_missing(true);
@@ -263,7 +263,7 @@ fn test_full_iterator() {
         let b1: Box<[u8]> = key(b"bbb1");
         let b2: Box<[u8]> = key(b"bbb2");
 
-        let prefix_extractor = rocksdb::SliceTransform::create_fixed_prefix(3);
+        let prefix_extractor = rocksdb_silk::SliceTransform::create_fixed_prefix(3);
         let factory = MemtableFactory::HashSkipList {
             bucket_count: 1_000_000,
             height: 4,

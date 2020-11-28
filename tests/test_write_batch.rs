@@ -14,7 +14,7 @@
 
 use pretty_assertions::assert_eq;
 
-use rocksdb::WriteBatch;
+use rocksdb_silk::WriteBatch;
 
 #[test]
 fn test_write_batch_clear() {

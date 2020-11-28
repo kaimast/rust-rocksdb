@@ -16,7 +16,7 @@ mod util;
 
 use pretty_assertions::assert_eq;
 
-use rocksdb::{Error, Options, SstFileWriter, DB};
+use rocksdb_silk::{Error, Options, SstFileWriter, DB};
 use util::DBPath;
 
 #[test]
@@ -37,7 +37,6 @@ fn sst_file_writer_works() {
 
         writer.delete(b"k3").unwrap();
         writer.finish().unwrap();
-        assert!(writer.file_size() > 0);
     }
     {
         let db = DB::open_default(&db_path).unwrap();
