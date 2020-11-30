@@ -21,7 +21,7 @@ use crate::{ffi, ColumnFamily, DBIterator, DBRawIterator, Error, IteratorMode, R
 /// ```
 /// use rocksdb::{DB, IteratorMode, Options};
 ///
-/// let path = "_path_for_rocksdb_storage3";
+/// let path = "_path_for_rocksdb_silk_storage3";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///     let snapshot = db.snapshot(); // Creates a longer-term snapshot of the DB, but closed when goes out of scope
@@ -32,13 +32,13 @@ use crate::{ffi, ColumnFamily, DBIterator, DBRawIterator, Error, IteratorMode, R
 ///
 pub struct Snapshot<'a> {
     db: &'a DB,
-    pub(crate) inner: *const ffi::rocksdb_snapshot_t,
+    pub(crate) inner: *const ffi::rocksdb_silk_snapshot_t,
 }
 
 impl<'a> Snapshot<'a> {
     /// Creates a new `Snapshot` of the database `db`.
     pub fn new(db: &DB) -> Snapshot {
-        let snapshot = unsafe { ffi::rocksdb_create_snapshot(db.inner) };
+        let snapshot = unsafe { ffi::rocksdb_silk_create_snapshot(db.inner) };
         Snapshot {
             db,
             inner: snapshot,
@@ -148,7 +148,7 @@ impl<'a> Snapshot<'a> {
 impl<'a> Drop for Snapshot<'a> {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_release_snapshot(self.db.inner, self.inner);
+            ffi::rocksdb_silk_release_snapshot(self.db.inner, self.inner);
         }
     }
 }

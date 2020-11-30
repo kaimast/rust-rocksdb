@@ -37,7 +37,7 @@ use std::str;
 ///
 /// See crate level documentation for a simple usage example.
 pub struct DB {
-    pub(crate) inner: *mut ffi::rocksdb_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_t,
     cfs: BTreeMap<String, ColumnFamily>,
     path: PathBuf,
 }
@@ -152,7 +152,7 @@ impl DB {
             )));
         }
 
-        let db: *mut ffi::rocksdb_t;
+        let db: *mut ffi::rocksdb_silk_t;
         let mut cf_map = BTreeMap::new();
 
         if cfs.is_empty() {
@@ -220,18 +220,18 @@ impl DB {
         opts: &Options,
         cpath: &CString,
         access_type: &AccessType,
-    ) -> Result<*mut ffi::rocksdb_t, Error> {
+    ) -> Result<*mut ffi::rocksdb_silk_t, Error> {
         let db = unsafe {
             match *access_type {
                 AccessType::ReadOnly {
                     error_if_log_file_exist,
-                } => ffi_try!(ffi::rocksdb_open_for_read_only(
+                } => ffi_try!(ffi::rocksdb_silk_open_for_read_only(
                     opts.inner,
                     cpath.as_ptr() as *const _,
                     error_if_log_file_exist as c_uchar,
                 )),
                 AccessType::ReadWrite => {
-                    ffi_try!(ffi::rocksdb_open(opts.inner, cpath.as_ptr() as *const _))
+                    ffi_try!(ffi::rocksdb_silk_open(opts.inner, cpath.as_ptr() as *const _))
                 }
             }
         };
@@ -243,15 +243,15 @@ impl DB {
         cpath: &CString,
         cfs_v: &[ColumnFamilyDescriptor],
         cfnames: &mut [*const c_char],
-        cfopts: &mut [*const ffi::rocksdb_options_t],
-        cfhandles: &mut Vec<*mut ffi::rocksdb_column_family_handle_t>,
+        cfopts: &mut [*const ffi::rocksdb_silk_options_t],
+        cfhandles: &mut Vec<*mut ffi::rocksdb_silk_column_family_handle_t>,
         access_type: &AccessType,
-    ) -> Result<*mut ffi::rocksdb_t, Error> {
+    ) -> Result<*mut ffi::rocksdb_silk_t, Error> {
         let db = unsafe {
             match *access_type {
                 AccessType::ReadOnly {
                     error_if_log_file_exist,
-                } => ffi_try!(ffi::rocksdb_open_for_read_only_column_families(
+                } => ffi_try!(ffi::rocksdb_silk_open_for_read_only_column_families(
                     opts.inner,
                     cpath.as_ptr(),
                     cfs_v.len() as c_int,
@@ -260,7 +260,7 @@ impl DB {
                     cfhandles.as_mut_ptr(),
                     error_if_log_file_exist as c_uchar,
                 )),
-                AccessType::ReadWrite => ffi_try!(ffi::rocksdb_open_column_families(
+                AccessType::ReadWrite => ffi_try!(ffi::rocksdb_silk_open_column_families(
                     opts.inner,
                     cpath.as_ptr(),
                     cfs_v.len() as c_int,
@@ -278,7 +278,7 @@ impl DB {
         let mut length = 0;
 
         unsafe {
-            let ptr = ffi_try!(ffi::rocksdb_list_column_families(
+            let ptr = ffi_try!(ffi::rocksdb_silk_list_column_families(
                 opts.inner,
                 cpath.as_ptr() as *const _,
                 &mut length,
@@ -288,7 +288,7 @@ impl DB {
                 .iter()
                 .map(|ptr| CStr::from_ptr(*ptr).to_string_lossy().into_owned())
                 .collect();
-            ffi::rocksdb_list_column_families_destroy(ptr, length);
+            ffi::rocksdb_silk_list_column_families_destroy(ptr, length);
             Ok(vec)
         }
     }
@@ -296,7 +296,7 @@ impl DB {
     pub fn destroy<P: AsRef<Path>>(opts: &Options, path: P) -> Result<(), Error> {
         let cpath = to_cpath(path)?;
         unsafe {
-            ffi_try!(ffi::rocksdb_destroy_db(opts.inner, cpath.as_ptr()));
+            ffi_try!(ffi::rocksdb_silk_destroy_db(opts.inner, cpath.as_ptr()));
         }
         Ok(())
     }
@@ -304,7 +304,7 @@ impl DB {
     pub fn repair<P: AsRef<Path>>(opts: &Options, path: P) -> Result<(), Error> {
         let cpath = to_cpath(path)?;
         unsafe {
-            ffi_try!(ffi::rocksdb_repair_db(opts.inner, cpath.as_ptr()));
+            ffi_try!(ffi::rocksdb_silk_repair_db(opts.inner, cpath.as_ptr()));
         }
         Ok(())
     }
@@ -316,7 +316,7 @@ impl DB {
     /// Flushes database memtables to SST files on the disk.
     pub fn flush_opt(&self, flushopts: &FlushOptions) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_flush(self.inner, flushopts.inner));
+            ffi_try!(ffi::rocksdb_silk_flush(self.inner, flushopts.inner));
         }
         Ok(())
     }
@@ -328,7 +328,7 @@ impl DB {
 
     pub fn write_opt(&self, batch: WriteBatch, writeopts: &WriteOptions) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_write(self.inner, writeopts.inner, batch.inner));
+            ffi_try!(ffi::rocksdb_silk_write(self.inner, writeopts.inner, batch.inner));
         }
         Ok(())
     }
@@ -403,7 +403,7 @@ impl DB {
 
         let key = key.as_ref();
         unsafe {
-            let val = ffi_try!(ffi::rocksdb_get_pinned(
+            let val = ffi_try!(ffi::rocksdb_silk_get_pinned(
                 self.inner,
                 readopts.inner,
                 key.as_ptr() as *const c_char,
@@ -443,7 +443,7 @@ impl DB {
 
         let key = key.as_ref();
         unsafe {
-            let val = ffi_try!(ffi::rocksdb_get_pinned_cf(
+            let val = ffi_try!(ffi::rocksdb_silk_get_pinned_cf(
                 self.inner,
                 readopts.inner,
                 cf.inner,
@@ -478,7 +478,7 @@ impl DB {
             ));
         };
         unsafe {
-            let inner = ffi_try!(ffi::rocksdb_create_column_family(
+            let inner = ffi_try!(ffi::rocksdb_silk_create_column_family(
                 self.inner,
                 opts.inner,
                 cf_name.as_ptr(),
@@ -493,7 +493,7 @@ impl DB {
     pub fn drop_cf(&mut self, name: &str) -> Result<(), Error> {
         if let Some(cf) = self.cfs.remove(name) {
             unsafe {
-                ffi_try!(ffi::rocksdb_drop_column_family(self.inner, cf.inner));
+                ffi_try!(ffi::rocksdb_silk_drop_column_family(self.inner, cf.inner));
             }
             Ok(())
         } else {
@@ -620,7 +620,7 @@ impl DB {
         let value = value.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_put(
+            ffi_try!(ffi::rocksdb_silk_put(
                 self.inner,
                 writeopts.inner,
                 key.as_ptr() as *const c_char,
@@ -647,7 +647,7 @@ impl DB {
         let value = value.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_put_cf(
+            ffi_try!(ffi::rocksdb_silk_put_cf(
                 self.inner,
                 writeopts.inner,
                 cf.inner,
@@ -669,7 +669,7 @@ impl DB {
         let value = value.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_merge(
+            ffi_try!(ffi::rocksdb_silk_merge(
                 self.inner,
                 writeopts.inner,
                 key.as_ptr() as *const c_char,
@@ -696,7 +696,7 @@ impl DB {
         let value = value.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_merge_cf(
+            ffi_try!(ffi::rocksdb_silk_merge_cf(
                 self.inner,
                 writeopts.inner,
                 cf.inner,
@@ -717,7 +717,7 @@ impl DB {
         let key = key.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_delete(
+            ffi_try!(ffi::rocksdb_silk_delete(
                 self.inner,
                 writeopts.inner,
                 key.as_ptr() as *const c_char,
@@ -736,7 +736,7 @@ impl DB {
         let key = key.as_ref();
 
         unsafe {
-            ffi_try!(ffi::rocksdb_delete_cf(
+            ffi_try!(ffi::rocksdb_silk_delete_cf(
                 self.inner,
                 writeopts.inner,
                 cf.inner,
@@ -793,7 +793,7 @@ impl DB {
             let start = start.as_ref().map(AsRef::as_ref);
             let end = end.as_ref().map(AsRef::as_ref);
 
-            ffi::rocksdb_compact_range(
+            ffi::rocksdb_silk_compact_range(
                 self.inner,
                 opt_bytes_to_ptr(start),
                 start.map_or(0, |s| s.len()) as size_t,
@@ -814,7 +814,7 @@ impl DB {
             let start = start.as_ref().map(AsRef::as_ref);
             let end = end.as_ref().map(AsRef::as_ref);
 
-            ffi::rocksdb_compact_range_opt(
+            ffi::rocksdb_silk_compact_range_opt(
                 self.inner,
                 opts.inner,
                 opt_bytes_to_ptr(start),
@@ -837,7 +837,7 @@ impl DB {
             let start = start.as_ref().map(AsRef::as_ref);
             let end = end.as_ref().map(AsRef::as_ref);
 
-            ffi::rocksdb_compact_range_cf(
+            ffi::rocksdb_silk_compact_range_cf(
                 self.inner,
                 cf.inner,
                 opt_bytes_to_ptr(start),
@@ -860,7 +860,7 @@ impl DB {
             let start = start.as_ref().map(AsRef::as_ref);
             let end = end.as_ref().map(AsRef::as_ref);
 
-            ffi::rocksdb_compact_range_cf_opt(
+            ffi::rocksdb_silk_compact_range_cf_opt(
                 self.inner,
                 cf.inner,
                 opts.inner,
@@ -878,7 +878,7 @@ impl DB {
         let cvalues: Vec<*const c_char> = copts.iter().map(|opt| opt.1.as_ptr()).collect();
         let count = opts.len() as i32;
         unsafe {
-            ffi_try!(ffi::rocksdb_set_options(
+            ffi_try!(ffi::rocksdb_silk_set_options(
                 self.inner,
                 count,
                 cnames.as_ptr(),
@@ -904,7 +904,7 @@ impl DB {
         };
 
         unsafe {
-            let value = ffi::rocksdb_property_value(self.inner, prop_name.as_ptr());
+            let value = ffi::rocksdb_silk_property_value(self.inner, prop_name.as_ptr());
             if value.is_null() {
                 return Ok(None);
             }
@@ -944,7 +944,7 @@ impl DB {
         };
 
         unsafe {
-            let value = ffi::rocksdb_property_value_cf(self.inner, cf.inner, prop_name.as_ptr());
+            let value = ffi::rocksdb_silk_property_value_cf(self.inner, cf.inner, prop_name.as_ptr());
             if value.is_null() {
                 return Ok(None);
             }
@@ -1061,7 +1061,7 @@ impl DB {
         cpaths: &[*const c_char],
     ) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_ingest_external_file(
+            ffi_try!(ffi::rocksdb_silk_ingest_external_file(
                 self.inner,
                 cpaths.as_ptr(),
                 paths_v.len(),
@@ -1079,7 +1079,7 @@ impl DB {
         cpaths: &[*const c_char],
     ) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_ingest_external_file_cf(
+            ffi_try!(ffi::rocksdb_silk_ingest_external_file_cf(
                 self.inner,
                 cf.inner,
                 cpaths.as_ptr(),
@@ -1094,26 +1094,26 @@ impl DB {
     /// and end key
     pub fn live_files(&self) -> Result<Vec<LiveFile>, Error> {
         unsafe {
-            let files = ffi::rocksdb_livefiles(self.inner);
+            let files = ffi::rocksdb_silk_livefiles(self.inner);
             if files.is_null() {
                 Err(Error::new("Could not get live files".to_owned()))
             } else {
-                let n = ffi::rocksdb_livefiles_count(files);
+                let n = ffi::rocksdb_silk_livefiles_count(files);
 
                 let mut livefiles = Vec::with_capacity(n as usize);
                 let mut key_size: usize = 0;
 
                 for i in 0..n {
-                    let name = from_cstr(ffi::rocksdb_livefiles_name(files, i));
-                    let size = ffi::rocksdb_livefiles_size(files, i);
-                    let level = ffi::rocksdb_livefiles_level(files, i) as i32;
+                    let name = from_cstr(ffi::rocksdb_silk_livefiles_name(files, i));
+                    let size = ffi::rocksdb_silk_livefiles_size(files, i);
+                    let level = ffi::rocksdb_silk_livefiles_level(files, i) as i32;
 
                     // get smallest key inside file
-                    let smallest_key = ffi::rocksdb_livefiles_smallestkey(files, i, &mut key_size);
+                    let smallest_key = ffi::rocksdb_silk_livefiles_smallestkey(files, i, &mut key_size);
                     let smallest_key = raw_data(smallest_key, key_size);
 
                     // get largest key inside file
-                    let largest_key = ffi::rocksdb_livefiles_largestkey(files, i, &mut key_size);
+                    let largest_key = ffi::rocksdb_silk_livefiles_largestkey(files, i, &mut key_size);
                     let largest_key = raw_data(largest_key, key_size);
 
                     livefiles.push(LiveFile {
@@ -1126,7 +1126,7 @@ impl DB {
                 }
 
                 // destroy livefiles metadata(s)
-                ffi::rocksdb_livefiles_destroy(files);
+                ffi::rocksdb_silk_livefiles_destroy(files);
 
                 // return
                 Ok(livefiles)
@@ -1146,7 +1146,7 @@ impl DB {
         let from = from.as_ref();
         let to = to.as_ref();
         unsafe {
-            ffi_try!(ffi::rocksdb_delete_file_in_range(
+            ffi_try!(ffi::rocksdb_silk_delete_file_in_range(
                 self.inner,
                 from.as_ptr() as *const c_char,
                 from.len() as size_t,
@@ -1167,7 +1167,7 @@ impl DB {
         let from = from.as_ref();
         let to = to.as_ref();
         unsafe {
-            ffi_try!(ffi::rocksdb_delete_file_in_range_cf(
+            ffi_try!(ffi::rocksdb_silk_delete_file_in_range_cf(
                 self.inner,
                 cf.inner,
                 from.as_ptr() as *const c_char,
@@ -1184,9 +1184,9 @@ impl Drop for DB {
     fn drop(&mut self) {
         unsafe {
             for cf in self.cfs.values() {
-                ffi::rocksdb_column_family_handle_destroy(cf.inner);
+                ffi::rocksdb_silk_column_family_handle_destroy(cf.inner);
             }
-            ffi::rocksdb_close(self.inner);
+            ffi::rocksdb_silk_close(self.inner);
         }
     }
 }

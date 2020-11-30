@@ -28,7 +28,7 @@ use std::slice;
 /// ```
 /// use rocksdb::{DB, Options};
 ///
-/// let path = "_path_for_rocksdb_storage4";
+/// let path = "_path_for_rocksdb_silk_storage4";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///     let mut iter = db.raw_iterator();
@@ -66,7 +66,7 @@ use std::slice;
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
 pub struct DBRawIterator<'a> {
-    inner: *mut ffi::rocksdb_iterator_t,
+    inner: *mut ffi::rocksdb_silk_iterator_t,
 
     /// When iterate_upper_bound is set, the inner C iterator keeps a pointer to the upper bound
     /// inside `_readopts`. Storing this makes sure the upper bound is always alive when the
@@ -80,7 +80,7 @@ impl<'a> DBRawIterator<'a> {
     pub(crate) fn new(db: &DB, readopts: ReadOptions) -> DBRawIterator<'a> {
         unsafe {
             DBRawIterator {
-                inner: ffi::rocksdb_create_iterator(db.inner, readopts.inner),
+                inner: ffi::rocksdb_silk_create_iterator(db.inner, readopts.inner),
                 _readopts: readopts,
                 db: PhantomData,
             }
@@ -94,7 +94,7 @@ impl<'a> DBRawIterator<'a> {
     ) -> DBRawIterator<'a> {
         unsafe {
             DBRawIterator {
-                inner: ffi::rocksdb_create_iterator_cf(db.inner, readopts.inner, cf_handle.inner),
+                inner: ffi::rocksdb_silk_create_iterator_cf(db.inner, readopts.inner, cf_handle.inner),
                 _readopts: readopts,
                 db: PhantomData,
             }
@@ -108,7 +108,7 @@ impl<'a> DBRawIterator<'a> {
     /// returned `false`, use the [`status`](DBRawIterator::status) method. `status` will never
     /// return an error when `valid` is `true`.
     pub fn valid(&self) -> bool {
-        unsafe { ffi::rocksdb_iter_valid(self.inner) != 0 }
+        unsafe { ffi::rocksdb_silk_iter_valid(self.inner) != 0 }
     }
 
     /// Returns an error `Result` if the iterator has encountered an error
@@ -118,7 +118,7 @@ impl<'a> DBRawIterator<'a> {
     /// Performing a seek will discard the current status.
     pub fn status(&self) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_iter_get_error(self.inner));
+            ffi_try!(ffi::rocksdb_silk_iter_get_error(self.inner));
         }
         Ok(())
     }
@@ -130,7 +130,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```rust
     /// use rocksdb::{DB, Options};
     ///
-    /// let path = "_path_for_rocksdb_storage5";
+    /// let path = "_path_for_rocksdb_silk_storage5";
     /// {
     ///     let db = DB::open_default(path).unwrap();
     ///     let mut iter = db.raw_iterator();
@@ -156,7 +156,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```
     pub fn seek_to_first(&mut self) {
         unsafe {
-            ffi::rocksdb_iter_seek_to_first(self.inner);
+            ffi::rocksdb_silk_iter_seek_to_first(self.inner);
         }
     }
 
@@ -167,7 +167,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```rust
     /// use rocksdb::{DB, Options};
     ///
-    /// let path = "_path_for_rocksdb_storage6";
+    /// let path = "_path_for_rocksdb_silk_storage6";
     /// {
     ///     let db = DB::open_default(path).unwrap();
     ///     let mut iter = db.raw_iterator();
@@ -193,7 +193,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```
     pub fn seek_to_last(&mut self) {
         unsafe {
-            ffi::rocksdb_iter_seek_to_last(self.inner);
+            ffi::rocksdb_silk_iter_seek_to_last(self.inner);
         }
     }
 
@@ -207,7 +207,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```rust
     /// use rocksdb::{DB, Options};
     ///
-    /// let path = "_path_for_rocksdb_storage7";
+    /// let path = "_path_for_rocksdb_silk_storage7";
     /// {
     ///     let db = DB::open_default(path).unwrap();
     ///     let mut iter = db.raw_iterator();
@@ -227,7 +227,7 @@ impl<'a> DBRawIterator<'a> {
         let key = key.as_ref();
 
         unsafe {
-            ffi::rocksdb_iter_seek(
+            ffi::rocksdb_silk_iter_seek(
                 self.inner,
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
@@ -246,7 +246,7 @@ impl<'a> DBRawIterator<'a> {
     /// ```rust
     /// use rocksdb::{DB, Options};
     ///
-    /// let path = "_path_for_rocksdb_storage8";
+    /// let path = "_path_for_rocksdb_silk_storage8";
     /// {
     ///     let db = DB::open_default(path).unwrap();
     ///     let mut iter = db.raw_iterator();
@@ -266,7 +266,7 @@ impl<'a> DBRawIterator<'a> {
         let key = key.as_ref();
 
         unsafe {
-            ffi::rocksdb_iter_seek_for_prev(
+            ffi::rocksdb_silk_iter_seek_for_prev(
                 self.inner,
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
@@ -277,14 +277,14 @@ impl<'a> DBRawIterator<'a> {
     /// Seeks to the next key.
     pub fn next(&mut self) {
         unsafe {
-            ffi::rocksdb_iter_next(self.inner);
+            ffi::rocksdb_silk_iter_next(self.inner);
         }
     }
 
     /// Seeks to the previous key.
     pub fn prev(&mut self) {
         unsafe {
-            ffi::rocksdb_iter_prev(self.inner);
+            ffi::rocksdb_silk_iter_prev(self.inner);
         }
     }
 
@@ -296,7 +296,7 @@ impl<'a> DBRawIterator<'a> {
             unsafe {
                 let mut key_len: size_t = 0;
                 let key_len_ptr: *mut size_t = &mut key_len;
-                let key_ptr = ffi::rocksdb_iter_key(self.inner, key_len_ptr) as *const c_uchar;
+                let key_ptr = ffi::rocksdb_silk_iter_key(self.inner, key_len_ptr) as *const c_uchar;
 
                 Some(slice::from_raw_parts(key_ptr, key_len as usize))
             }
@@ -313,7 +313,7 @@ impl<'a> DBRawIterator<'a> {
             unsafe {
                 let mut val_len: size_t = 0;
                 let val_len_ptr: *mut size_t = &mut val_len;
-                let val_ptr = ffi::rocksdb_iter_value(self.inner, val_len_ptr) as *const c_uchar;
+                let val_ptr = ffi::rocksdb_silk_iter_value(self.inner, val_len_ptr) as *const c_uchar;
 
                 Some(slice::from_raw_parts(val_ptr, val_len as usize))
             }
@@ -326,7 +326,7 @@ impl<'a> DBRawIterator<'a> {
 impl<'a> Drop for DBRawIterator<'a> {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_iter_destroy(self.inner);
+            ffi::rocksdb_silk_iter_destroy(self.inner);
         }
     }
 }
@@ -340,7 +340,7 @@ unsafe impl<'a> Sync for DBRawIterator<'a> {}
 /// ```
 /// use rocksdb::{DB, Direction, IteratorMode, Options};
 ///
-/// let path = "_path_for_rocksdb_storage2";
+/// let path = "_path_for_rocksdb_silk_storage2";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///     let mut iter = db.iterator(IteratorMode::Start); // Always iterates forward

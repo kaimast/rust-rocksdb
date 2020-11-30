@@ -51,10 +51,10 @@ pub struct CompactionFilterContext {
 }
 
 impl CompactionFilterContext {
-    unsafe fn from_raw(ptr: *mut ffi::rocksdb_compactionfiltercontext_t) -> Self {
-        let is_full_compaction = ffi::rocksdb_compactionfiltercontext_is_full_compaction(ptr) != 0;
+    unsafe fn from_raw(ptr: *mut ffi::rocksdb_silk_compactionfiltercontext_t) -> Self {
+        let is_full_compaction = ffi::rocksdb_silk_compactionfiltercontext_is_full_compaction(ptr) != 0;
         let is_manual_compaction =
-            ffi::rocksdb_compactionfiltercontext_is_manual_compaction(ptr) != 0;
+            ffi::rocksdb_silk_compactionfiltercontext_is_manual_compaction(ptr) != 0;
 
         CompactionFilterContext {
             is_full_compaction,
@@ -65,8 +65,8 @@ impl CompactionFilterContext {
 
 pub unsafe extern "C" fn create_compaction_filter_callback<F>(
     raw_self: *mut c_void,
-    context: *mut ffi::rocksdb_compactionfiltercontext_t,
-) -> *mut ffi::rocksdb_compactionfilter_t
+    context: *mut ffi::rocksdb_silk_compactionfiltercontext_t,
+) -> *mut ffi::rocksdb_silk_compactionfilter_t
 where
     F: CompactionFilterFactory,
 {
@@ -76,7 +76,7 @@ where
 
     let filter_ptr = Box::into_raw(filter);
 
-    ffi::rocksdb_compactionfilter_create(
+    ffi::rocksdb_silk_compactionfilter_create(
         filter_ptr as *mut c_void,
         Some(compaction_filter::destructor_callback::<F::Filter>),
         Some(compaction_filter::filter_callback::<F::Filter>),
@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn compaction_filter_factory_test() {
-        let path = "_rust_rocksdb_filterfactorytest";
+        let path = "_rust_rocksdb_silk_filterfactorytest";
         let mut opts = Options::default();
         opts.create_if_missing(true);
         opts.set_compaction_filter_factory(TestFactory(CString::new("TestFactory").unwrap()));

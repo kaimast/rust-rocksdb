@@ -44,7 +44,7 @@ impl ColumnFamilyDescriptor {
 /// An opaque type used to represent a column family. Returned from some functions, and used
 /// in others
 pub struct ColumnFamily {
-    pub(crate) inner: *mut ffi::rocksdb_column_family_handle_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_column_family_handle_t,
 }
 
 unsafe impl Send for ColumnFamily {}

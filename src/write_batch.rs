@@ -23,7 +23,7 @@ use std::slice;
 /// ```
 /// use rocksdb::{DB, Options, WriteBatch};
 ///
-/// let path = "_path_for_rocksdb_storage1";
+/// let path = "_path_for_rocksdb_silk_storage1";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///     let mut batch = WriteBatch::default();
@@ -35,7 +35,7 @@ use std::slice;
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
 pub struct WriteBatch {
-    pub(crate) inner: *mut ffi::rocksdb_writebatch_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_writebatch_t,
 }
 
 /// Receives the puts and deletes of a write batch.
@@ -79,14 +79,14 @@ unsafe extern "C" fn writebatch_delete_callback(state: *mut c_void, k: *const c_
 
 impl WriteBatch {
     pub fn len(&self) -> usize {
-        unsafe { ffi::rocksdb_writebatch_count(self.inner) as usize }
+        unsafe { ffi::rocksdb_silk_writebatch_count(self.inner) as usize }
     }
 
     /// Return WriteBatch serialized size (in bytes).
     pub fn size_in_bytes(&self) -> usize {
         unsafe {
             let mut batch_size: size_t = 0;
-            ffi::rocksdb_writebatch_data(self.inner, &mut batch_size);
+            ffi::rocksdb_silk_writebatch_data(self.inner, &mut batch_size);
             batch_size as usize
         }
     }
@@ -102,7 +102,7 @@ impl WriteBatch {
     pub fn iterate(&self, callbacks: &mut dyn WriteBatchIterator) {
         let state = Box::into_raw(Box::new(callbacks));
         unsafe {
-            ffi::rocksdb_writebatch_iterate(
+            ffi::rocksdb_silk_writebatch_iterate(
                 self.inner,
                 state as *mut c_void,
                 Some(writebatch_put_callback),
@@ -124,7 +124,7 @@ impl WriteBatch {
         let value = value.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_put(
+            ffi::rocksdb_silk_writebatch_put(
                 self.inner,
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
@@ -143,7 +143,7 @@ impl WriteBatch {
         let value = value.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_put_cf(
+            ffi::rocksdb_silk_writebatch_put_cf(
                 self.inner,
                 cf.inner,
                 key.as_ptr() as *const c_char,
@@ -163,7 +163,7 @@ impl WriteBatch {
         let value = value.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_merge(
+            ffi::rocksdb_silk_writebatch_merge(
                 self.inner,
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
@@ -182,7 +182,7 @@ impl WriteBatch {
         let value = value.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_merge_cf(
+            ffi::rocksdb_silk_writebatch_merge_cf(
                 self.inner,
                 cf.inner,
                 key.as_ptr() as *const c_char,
@@ -198,7 +198,7 @@ impl WriteBatch {
         let key = key.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_delete(
+            ffi::rocksdb_silk_writebatch_delete(
                 self.inner,
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
@@ -210,7 +210,7 @@ impl WriteBatch {
         let key = key.as_ref();
 
         unsafe {
-            ffi::rocksdb_writebatch_delete_cf(
+            ffi::rocksdb_silk_writebatch_delete_cf(
                 self.inner,
                 cf.inner,
                 key.as_ptr() as *const c_char,
@@ -228,7 +228,7 @@ impl WriteBatch {
         let (start_key, end_key) = (from.as_ref(), to.as_ref());
 
         unsafe {
-            ffi::rocksdb_writebatch_delete_range(
+            ffi::rocksdb_silk_writebatch_delete_range(
                 self.inner,
                 start_key.as_ptr() as *const c_char,
                 start_key.len() as size_t,
@@ -247,7 +247,7 @@ impl WriteBatch {
         let (start_key, end_key) = (from.as_ref(), to.as_ref());
 
         unsafe {
-            ffi::rocksdb_writebatch_delete_range_cf(
+            ffi::rocksdb_silk_writebatch_delete_range_cf(
                 self.inner,
                 cf.inner,
                 start_key.as_ptr() as *const c_char,
@@ -261,7 +261,7 @@ impl WriteBatch {
     /// Clear all updates buffered in this batch.
     pub fn clear(&mut self) {
         unsafe {
-            ffi::rocksdb_writebatch_clear(self.inner);
+            ffi::rocksdb_silk_writebatch_clear(self.inner);
         }
     }
 }
@@ -269,14 +269,14 @@ impl WriteBatch {
 impl Default for WriteBatch {
     fn default() -> WriteBatch {
         WriteBatch {
-            inner: unsafe { ffi::rocksdb_writebatch_create() },
+            inner: unsafe { ffi::rocksdb_silk_writebatch_create() },
         }
     }
 }
 
 impl Drop for WriteBatch {
     fn drop(&mut self) {
-        unsafe { ffi::rocksdb_writebatch_destroy(self.inner) }
+        unsafe { ffi::rocksdb_silk_writebatch_destroy(self.inner) }
     }
 }
 

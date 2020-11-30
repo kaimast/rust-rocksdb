@@ -35,15 +35,15 @@ pub struct BackupEngineInfo {
 }
 
 pub struct BackupEngine {
-    inner: *mut ffi::rocksdb_backup_engine_t,
+    inner: *mut ffi::rocksdb_silk_backup_engine_t,
 }
 
 pub struct BackupEngineOptions {
-    inner: *mut ffi::rocksdb_options_t,
+    inner: *mut ffi::rocksdb_silk_options_t,
 }
 
 pub struct RestoreOptions {
-    inner: *mut ffi::rocksdb_restore_options_t,
+    inner: *mut ffi::rocksdb_silk_restore_options_t,
 }
 
 impl BackupEngine {
@@ -63,8 +63,8 @@ impl BackupEngine {
             ));
         };
 
-        let be: *mut ffi::rocksdb_backup_engine_t;
-        unsafe { be = ffi_try!(ffi::rocksdb_backup_engine_open(opts.inner, cpath.as_ptr())) }
+        let be: *mut ffi::rocksdb_silk_backup_engine_t;
+        unsafe { be = ffi_try!(ffi::rocksdb_silk_backup_engine_open(opts.inner, cpath.as_ptr())) }
 
         if be.is_null() {
             return Err(Error::new("Could not initialize backup engine.".to_owned()));
@@ -79,7 +79,7 @@ impl BackupEngine {
     /// use `create_new_backup_flush` instead.
     pub fn create_new_backup(&mut self, db: &DB) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_backup_engine_create_new_backup(
+            ffi_try!(ffi::rocksdb_silk_backup_engine_create_new_backup(
                 self.inner,
                 db.inner
             ));
@@ -90,7 +90,7 @@ impl BackupEngine {
 
     pub fn purge_old_backups(&mut self, num_backups_to_keep: usize) -> Result<(), Error> {
         unsafe {
-            ffi_try!(ffi::rocksdb_backup_engine_purge_old_backups(
+            ffi_try!(ffi::rocksdb_silk_backup_engine_purge_old_backups(
                 self.inner,
                 num_backups_to_keep as u32,
             ));
@@ -149,7 +149,7 @@ impl BackupEngine {
         };
 
         unsafe {
-            ffi_try!(ffi::rocksdb_backup_engine_restore_db_from_latest_backup(
+            ffi_try!(ffi::rocksdb_silk_backup_engine_restore_db_from_latest_backup(
                 self.inner,
                 c_db_dir.as_ptr(),
                 c_wal_dir.as_ptr(),
@@ -168,22 +168,22 @@ impl BackupEngine {
     /// backups on the same directory
     pub fn get_backup_info(&self) -> Vec<BackupEngineInfo> {
         unsafe {
-            let i = ffi::rocksdb_backup_engine_get_backup_info(self.inner);
+            let i = ffi::rocksdb_silk_backup_engine_get_backup_info(self.inner);
 
-            let n = ffi::rocksdb_backup_engine_info_count(i);
+            let n = ffi::rocksdb_silk_backup_engine_info_count(i);
 
             let mut info = Vec::with_capacity(n as usize);
             for index in 0..n {
                 info.push(BackupEngineInfo {
-                    timestamp: ffi::rocksdb_backup_engine_info_timestamp(i, index),
-                    backup_id: ffi::rocksdb_backup_engine_info_backup_id(i, index),
-                    size: ffi::rocksdb_backup_engine_info_size(i, index),
-                    num_files: ffi::rocksdb_backup_engine_info_number_files(i, index),
+                    timestamp: ffi::rocksdb_silk_backup_engine_info_timestamp(i, index),
+                    backup_id: ffi::rocksdb_silk_backup_engine_info_backup_id(i, index),
+                    size: ffi::rocksdb_silk_backup_engine_info_size(i, index),
+                    num_files: ffi::rocksdb_silk_backup_engine_info_number_files(i, index),
                 })
             }
 
             // destroy backup info object
-            ffi::rocksdb_backup_engine_info_destroy(i);
+            ffi::rocksdb_silk_backup_engine_info_destroy(i);
 
             info
         }
@@ -197,7 +197,7 @@ impl BackupEngineOptions {
 impl RestoreOptions {
     pub fn set_keep_log_files(&mut self, keep_log_files: bool) {
         unsafe {
-            ffi::rocksdb_restore_options_set_keep_log_files(self.inner, keep_log_files as c_int);
+            ffi::rocksdb_silk_restore_options_set_keep_log_files(self.inner, keep_log_files as c_int);
         }
     }
 }
@@ -205,7 +205,7 @@ impl RestoreOptions {
 impl Default for BackupEngineOptions {
     fn default() -> BackupEngineOptions {
         unsafe {
-            let opts = ffi::rocksdb_options_create();
+            let opts = ffi::rocksdb_silk_options_create();
             if opts.is_null() {
                 panic!("Could not create RocksDB backup options".to_owned());
             }
@@ -217,7 +217,7 @@ impl Default for BackupEngineOptions {
 impl Default for RestoreOptions {
     fn default() -> RestoreOptions {
         unsafe {
-            let opts = ffi::rocksdb_restore_options_create();
+            let opts = ffi::rocksdb_silk_restore_options_create();
             if opts.is_null() {
                 panic!("Could not create RocksDB restore options".to_owned());
             }
@@ -229,7 +229,7 @@ impl Default for RestoreOptions {
 impl Drop for BackupEngine {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_backup_engine_close(self.inner);
+            ffi::rocksdb_silk_backup_engine_close(self.inner);
         }
     }
 }
@@ -237,7 +237,7 @@ impl Drop for BackupEngine {
 impl Drop for BackupEngineOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_options_destroy(self.inner);
+            ffi::rocksdb_silk_options_destroy(self.inner);
         }
     }
 }
@@ -245,7 +245,7 @@ impl Drop for BackupEngineOptions {
 impl Drop for RestoreOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_restore_options_destroy(self.inner);
+            ffi::rocksdb_silk_restore_options_destroy(self.inner);
         }
     }
 }

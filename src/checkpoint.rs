@@ -21,13 +21,13 @@ use crate::{ffi, Error, DB};
 use std::ffi::CString;
 use std::path::Path;
 
-/// Undocumented parameter for `ffi::rocksdb_checkpoint_create` function. Zero by default.
+/// Undocumented parameter for `ffi::rocksdb_silk_checkpoint_create` function. Zero by default.
 const LOG_SIZE_FOR_FLUSH: u64 = 0_u64;
 
 /// Database's checkpoint object.
 /// Used to create checkpoints of the specified DB from time to time.
 pub struct Checkpoint {
-    inner: *mut ffi::rocksdb_checkpoint_t,
+    inner: *mut ffi::rocksdb_silk_checkpoint_t,
 }
 
 impl Checkpoint {
@@ -36,9 +36,9 @@ impl Checkpoint {
     /// Does not actually produce checkpoints, call `.create_checkpoint()` method to produce
     /// a DB checkpoint.
     pub fn new(db: &DB) -> Result<Checkpoint, Error> {
-        let checkpoint: *mut ffi::rocksdb_checkpoint_t;
+        let checkpoint: *mut ffi::rocksdb_silk_checkpoint_t;
 
-        unsafe { checkpoint = ffi_try!(ffi::rocksdb_checkpoint_object_create(db.inner)) };
+        unsafe { checkpoint = ffi_try!(ffi::rocksdb_silk_checkpoint_object_create(db.inner)) };
 
         if checkpoint.is_null() {
             return Err(Error::new("Could not create checkpoint object.".to_owned()));
@@ -59,7 +59,7 @@ impl Checkpoint {
         };
 
         unsafe {
-            ffi_try!(ffi::rocksdb_checkpoint_create(
+            ffi_try!(ffi::rocksdb_silk_checkpoint_create(
                 self.inner,
                 cpath.as_ptr(),
                 LOG_SIZE_FOR_FLUSH,
@@ -73,7 +73,7 @@ impl Checkpoint {
 impl Drop for Checkpoint {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_checkpoint_object_destroy(self.inner);
+            ffi::rocksdb_silk_checkpoint_object_destroy(self.inner);
         }
     }
 }

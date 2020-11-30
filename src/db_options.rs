@@ -30,12 +30,12 @@ use crate::{
     Error, Snapshot,
 };
 
-fn new_cache(capacity: size_t) -> *mut ffi::rocksdb_cache_t {
-    unsafe { ffi::rocksdb_cache_create_lru(capacity) }
+fn new_cache(capacity: size_t) -> *mut ffi::rocksdb_silk_cache_t {
+    unsafe { ffi::rocksdb_silk_cache_create_lru(capacity) }
 }
 
 pub struct Cache {
-    pub(crate) inner: *mut ffi::rocksdb_cache_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_cache_t,
 }
 
 impl Cache {
@@ -51,18 +51,18 @@ impl Cache {
 
     /// Returns the Cache memory usage
     pub fn get_usage(&self) -> usize {
-        unsafe { ffi::rocksdb_cache_get_usage(self.inner) }
+        unsafe { ffi::rocksdb_silk_cache_get_usage(self.inner) }
     }
 
     /// Returns pinned memory usage
     pub fn get_pinned_usage(&self) -> usize {
-        unsafe { ffi::rocksdb_cache_get_pinned_usage(self.inner) }
+        unsafe { ffi::rocksdb_silk_cache_get_pinned_usage(self.inner) }
     }
 
     /// Sets cache capacity
     pub fn set_capacity(&mut self, capacity: size_t) {
         unsafe {
-            ffi::rocksdb_cache_set_capacity(self.inner, capacity);
+            ffi::rocksdb_silk_cache_set_capacity(self.inner, capacity);
         }
     }
 }
@@ -70,7 +70,7 @@ impl Cache {
 impl Drop for Cache {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_cache_destroy(self.inner);
+            ffi::rocksdb_silk_cache_destroy(self.inner);
         }
     }
 }
@@ -86,13 +86,13 @@ impl Drop for Cache {
 /// Note: currently, C API behinds C++ API for various settings.
 /// See also: `rocksdb/include/env.h`
 pub struct Env {
-    pub(crate) inner: *mut ffi::rocksdb_env_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_env_t,
 }
 
 impl Drop for Env {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_env_destroy(self.inner);
+            ffi::rocksdb_silk_env_destroy(self.inner);
         }
     }
 }
@@ -100,7 +100,7 @@ impl Drop for Env {
 impl Env {
     /// Returns default env
     pub fn default() -> Result<Env, Error> {
-        let env = unsafe { ffi::rocksdb_create_default_env() };
+        let env = unsafe { ffi::rocksdb_silk_create_default_env() };
         if env.is_null() {
             Err(Error::new("Could not create mem env".to_owned()))
         } else {
@@ -111,7 +111,7 @@ impl Env {
     /// Returns a new environment that stores its data in memory and delegates
     /// all non-file-storage tasks to base_env.
     pub fn mem_env() -> Result<Env, Error> {
-        let env = unsafe { ffi::rocksdb_create_mem_env() };
+        let env = unsafe { ffi::rocksdb_silk_create_mem_env() };
         if env.is_null() {
             Err(Error::new("Could not create mem env".to_owned()))
         } else {
@@ -125,7 +125,7 @@ impl Env {
     /// Default: 1
     pub fn set_background_threads(&mut self, num_threads: c_int) {
         unsafe {
-            ffi::rocksdb_env_set_background_threads(self.inner, num_threads);
+            ffi::rocksdb_silk_env_set_background_threads(self.inner, num_threads);
         }
     }
 
@@ -133,14 +133,14 @@ impl Env {
     /// prevent compactions from stalling memtable flushes.
     pub fn set_high_priority_background_threads(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_env_set_high_priority_background_threads(self.inner, n);
+            ffi::rocksdb_silk_env_set_high_priority_background_threads(self.inner, n);
         }
     }
 
     /// Wait for all threads started by StartThread to terminate.
     pub fn join_all_threads(&mut self) {
         unsafe {
-            ffi::rocksdb_env_join_all_threads(self.inner);
+            ffi::rocksdb_silk_env_join_all_threads(self.inner);
         }
     }
 }
@@ -180,7 +180,7 @@ impl Env {
 /// }
 /// ```
 pub struct Options {
-    pub(crate) inner: *mut ffi::rocksdb_options_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_options_t,
 }
 
 /// Optionally disable WAL or sync for this write.
@@ -192,7 +192,7 @@ pub struct Options {
 /// ```
 /// use rocksdb::{DB, Options, WriteBatch, WriteOptions};
 ///
-/// let path = "_path_for_rocksdb_storageY1";
+/// let path = "_path_for_rocksdb_silk_storageY1";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///     let mut batch = WriteBatch::default();
@@ -209,7 +209,7 @@ pub struct Options {
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
 pub struct WriteOptions {
-    pub(crate) inner: *mut ffi::rocksdb_writeoptions_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_writeoptions_t,
 }
 
 /// Optionally wait for the memtable flush to be performed.
@@ -221,7 +221,7 @@ pub struct WriteOptions {
 /// ```
 /// use rocksdb::{DB, Options, FlushOptions};
 ///
-/// let path = "_path_for_rocksdb_storageY2";
+/// let path = "_path_for_rocksdb_silk_storageY2";
 /// {
 ///     let db = DB::open_default(path).unwrap();
 ///
@@ -233,16 +233,16 @@ pub struct WriteOptions {
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
 pub struct FlushOptions {
-    pub(crate) inner: *mut ffi::rocksdb_flushoptions_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_flushoptions_t,
 }
 
 /// For configuring block-based file storage.
 pub struct BlockBasedOptions {
-    pub(crate) inner: *mut ffi::rocksdb_block_based_table_options_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_block_based_table_options_t,
 }
 
 pub struct ReadOptions {
-    pub(crate) inner: *mut ffi::rocksdb_readoptions_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_readoptions_t,
     iterate_upper_bound: Option<Vec<u8>>,
 }
 
@@ -261,7 +261,7 @@ pub struct ReadOptions {
 /// writer.put(b"k1", b"v1").unwrap();
 /// writer.finish().unwrap();
 ///
-/// let path = "_path_for_rocksdb_storageY3";
+/// let path = "_path_for_rocksdb_silk_storageY3";
 /// {
 ///   let db = DB::open_default(&path).unwrap();
 ///   let mut ingest_opts = IngestExternalFileOptions::default();
@@ -271,7 +271,7 @@ pub struct ReadOptions {
 /// let _ = DB::destroy(&Options::default(), path);
 /// ```
 pub struct IngestExternalFileOptions {
-    pub(crate) inner: *mut ffi::rocksdb_ingestexternalfileoptions_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_ingestexternalfileoptions_t,
 }
 
 // Safety note: auto-implementing Send on most db-related types is prevented by the inner FFI
@@ -294,7 +294,7 @@ unsafe impl Sync for IngestExternalFileOptions {}
 impl Drop for Options {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_options_destroy(self.inner);
+            ffi::rocksdb_silk_options_destroy(self.inner);
         }
     }
 }
@@ -302,7 +302,7 @@ impl Drop for Options {
 impl Drop for BlockBasedOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_block_based_options_destroy(self.inner);
+            ffi::rocksdb_silk_block_based_options_destroy(self.inner);
         }
     }
 }
@@ -310,7 +310,7 @@ impl Drop for BlockBasedOptions {
 impl Drop for FlushOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_flushoptions_destroy(self.inner);
+            ffi::rocksdb_silk_flushoptions_destroy(self.inner);
         }
     }
 }
@@ -318,20 +318,20 @@ impl Drop for FlushOptions {
 impl Drop for WriteOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_writeoptions_destroy(self.inner);
+            ffi::rocksdb_silk_writeoptions_destroy(self.inner);
         }
     }
 }
 
 impl Drop for ReadOptions {
     fn drop(&mut self) {
-        unsafe { ffi::rocksdb_readoptions_destroy(self.inner) }
+        unsafe { ffi::rocksdb_silk_readoptions_destroy(self.inner) }
     }
 }
 
 impl Drop for IngestExternalFileOptions {
     fn drop(&mut self) {
-        unsafe { ffi::rocksdb_ingestexternalfileoptions_destroy(self.inner) }
+        unsafe { ffi::rocksdb_silk_ingestexternalfileoptions_destroy(self.inner) }
     }
 }
 
@@ -342,7 +342,7 @@ impl BlockBasedOptions {
     /// compression is enabled. This parameter can be changed dynamically.
     pub fn set_block_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_block_size(self.inner, size);
+            ffi::rocksdb_silk_block_based_options_set_block_size(self.inner, size);
         }
     }
 
@@ -356,8 +356,8 @@ impl BlockBasedOptions {
         let cache = new_cache(size);
         unsafe {
             // Since cache is wrapped in shared_ptr, we don't need to
-            // call rocksdb_cache_destroy explicitly.
-            ffi::rocksdb_block_based_options_set_block_cache(self.inner, cache);
+            // call rocksdb_silk_cache_destroy explicitly.
+            ffi::rocksdb_silk_block_based_options_set_block_cache(self.inner, cache);
         }
     }
 
@@ -374,8 +374,8 @@ impl BlockBasedOptions {
         let cache = new_cache(size);
         unsafe {
             // Since cache is wrapped in shared_ptr, we don't need to
-            // call rocksdb_cache_destroy explicitly.
-            ffi::rocksdb_block_based_options_set_block_cache_compressed(self.inner, cache);
+            // call rocksdb_silk_cache_destroy explicitly.
+            ffi::rocksdb_silk_block_based_options_set_block_cache_compressed(self.inner, cache);
         }
     }
 
@@ -386,7 +386,7 @@ impl BlockBasedOptions {
     /// By default, rocksdb will automatically create and use an 8MB internal cache.
     pub fn set_block_cache(&mut self, cache: &Cache) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_block_cache(self.inner, cache.inner);
+            ffi::rocksdb_silk_block_based_options_set_block_cache(self.inner, cache.inner);
         }
     }
 
@@ -395,14 +395,14 @@ impl BlockBasedOptions {
     /// By default, rocksdb will not use a compressed block cache.
     pub fn set_block_cache_compressed(&mut self, cache: &Cache) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_block_cache_compressed(self.inner, cache.inner);
+            ffi::rocksdb_silk_block_based_options_set_block_cache_compressed(self.inner, cache.inner);
         }
     }
 
     /// Disable block cache
     pub fn disable_cache(&mut self) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_no_block_cache(self.inner, true as c_uchar);
+            ffi::rocksdb_silk_block_based_options_set_no_block_cache(self.inner, true as c_uchar);
         }
     }
 
@@ -410,18 +410,18 @@ impl BlockBasedOptions {
     pub fn set_bloom_filter(&mut self, bits_per_key: c_int, block_based: bool) {
         unsafe {
             let bloom = if block_based {
-                ffi::rocksdb_filterpolicy_create_bloom(bits_per_key)
+                ffi::rocksdb_silk_filterpolicy_create_bloom(bits_per_key)
             } else {
-                ffi::rocksdb_filterpolicy_create_bloom_full(bits_per_key)
+                ffi::rocksdb_silk_filterpolicy_create_bloom_full(bits_per_key)
             };
 
-            ffi::rocksdb_block_based_options_set_filter_policy(self.inner, bloom);
+            ffi::rocksdb_silk_block_based_options_set_filter_policy(self.inner, bloom);
         }
     }
 
     pub fn set_cache_index_and_filter_blocks(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_cache_index_and_filter_blocks(self.inner, v as u8);
+            ffi::rocksdb_silk_block_based_options_set_cache_index_and_filter_blocks(self.inner, v as u8);
         }
     }
 
@@ -439,7 +439,7 @@ impl BlockBasedOptions {
     pub fn set_index_type(&mut self, index_type: BlockBasedIndexType) {
         let index = index_type as i32;
         unsafe {
-            ffi::rocksdb_block_based_options_set_index_type(self.inner, index);
+            ffi::rocksdb_silk_block_based_options_set_index_type(self.inner, index);
         }
     }
 
@@ -451,7 +451,7 @@ impl BlockBasedOptions {
     /// Default: false.
     pub fn set_pin_l0_filter_and_index_blocks_in_cache(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(
+            ffi::rocksdb_silk_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(
                 self.inner,
                 v as c_uchar,
             );
@@ -466,7 +466,7 @@ impl BlockBasedOptions {
     /// Default: 2.
     pub fn set_format_version(&mut self, version: i32) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_format_version(self.inner, version);
+            ffi::rocksdb_silk_block_based_options_set_format_version(self.inner, version);
         }
     }
 
@@ -478,14 +478,14 @@ impl BlockBasedOptions {
     /// Default: 16.
     pub fn set_block_restart_interval(&mut self, interval: i32) {
         unsafe {
-            ffi::rocksdb_block_based_options_set_block_restart_interval(self.inner, interval);
+            ffi::rocksdb_silk_block_based_options_set_block_restart_interval(self.inner, interval);
         }
     }
 }
 
 impl Default for BlockBasedOptions {
     fn default() -> BlockBasedOptions {
-        let block_opts = unsafe { ffi::rocksdb_block_based_options_create() };
+        let block_opts = unsafe { ffi::rocksdb_silk_block_based_options_create() };
         if block_opts.is_null() {
             panic!("Could not create RocksDB block based options");
         }
@@ -510,7 +510,7 @@ impl Options {
     /// ```
     pub fn increase_parallelism(&mut self, parallelism: i32) {
         unsafe {
-            ffi::rocksdb_options_increase_parallelism(self.inner, parallelism);
+            ffi::rocksdb_silk_options_increase_parallelism(self.inner, parallelism);
         }
     }
 
@@ -532,7 +532,7 @@ impl Options {
     /// `memtable_memory_budget`.
     pub fn optimize_level_style_compaction(&mut self, memtable_memory_budget: usize) {
         unsafe {
-            ffi::rocksdb_options_optimize_level_style_compaction(
+            ffi::rocksdb_silk_options_optimize_level_style_compaction(
                 self.inner,
                 memtable_memory_budget as u64,
             );
@@ -557,7 +557,7 @@ impl Options {
     /// `memtable_memory_budget`.
     pub fn optimize_universal_style_compaction(&mut self, memtable_memory_budget: usize) {
         unsafe {
-            ffi::rocksdb_options_optimize_universal_style_compaction(
+            ffi::rocksdb_silk_options_optimize_universal_style_compaction(
                 self.inner,
                 memtable_memory_budget as u64,
             );
@@ -578,7 +578,7 @@ impl Options {
     /// ```
     pub fn create_if_missing(&mut self, create_if_missing: bool) {
         unsafe {
-            ffi::rocksdb_options_set_create_if_missing(self.inner, create_if_missing as c_uchar);
+            ffi::rocksdb_silk_options_set_create_if_missing(self.inner, create_if_missing as c_uchar);
         }
     }
 
@@ -597,7 +597,7 @@ impl Options {
     /// ```
     pub fn create_missing_column_families(&mut self, create_missing_cfs: bool) {
         unsafe {
-            ffi::rocksdb_options_set_create_missing_column_families(
+            ffi::rocksdb_silk_options_set_create_missing_column_families(
                 self.inner,
                 create_missing_cfs as c_uchar,
             );
@@ -609,7 +609,7 @@ impl Options {
     /// Default: false
     pub fn set_error_if_exists(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_error_if_exists(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_error_if_exists(self.inner, enabled as c_uchar);
         }
     }
 
@@ -627,7 +627,7 @@ impl Options {
     /// Default: false
     pub fn set_paranoid_checks(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_paranoid_checks(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_paranoid_checks(self.inner, enabled as c_uchar);
         }
     }
 
@@ -659,11 +659,11 @@ impl Options {
     pub fn set_db_paths(&mut self, paths: &[DBPath]) {
         let mut paths: Vec<_> = paths
             .iter()
-            .map(|path| path.inner as *const ffi::rocksdb_dbpath_t)
+            .map(|path| path.inner as *const ffi::rocksdb_silk_dbpath_t)
             .collect();
         let num_paths = paths.len();
         unsafe {
-            ffi::rocksdb_options_set_db_paths(self.inner, paths.as_mut_ptr(), num_paths);
+            ffi::rocksdb_silk_options_set_db_paths(self.inner, paths.as_mut_ptr(), num_paths);
         }
     }
 
@@ -675,7 +675,7 @@ impl Options {
     /// Default: Env::default()
     pub fn set_env(&mut self, env: &Env) {
         unsafe {
-            ffi::rocksdb_options_set_env(self.inner, env.inner);
+            ffi::rocksdb_silk_options_set_env(self.inner, env.inner);
         }
     }
 
@@ -694,7 +694,7 @@ impl Options {
     /// ```
     pub fn set_compression_type(&mut self, t: DBCompressionType) {
         unsafe {
-            ffi::rocksdb_options_set_compression(self.inner, t as c_int);
+            ffi::rocksdb_silk_options_set_compression(self.inner, t as c_int);
         }
     }
 
@@ -723,7 +723,7 @@ impl Options {
     pub fn set_compression_per_level(&mut self, level_types: &[DBCompressionType]) {
         unsafe {
             let mut level_types: Vec<_> = level_types.iter().map(|&t| t as c_int).collect();
-            ffi::rocksdb_options_set_compression_per_level(
+            ffi::rocksdb_silk_options_set_compression_per_level(
                 self.inner,
                 level_types.as_mut_ptr(),
                 level_types.len() as size_t,
@@ -764,7 +764,7 @@ impl Options {
         max_dict_bytes: c_int,
     ) {
         unsafe {
-            ffi::rocksdb_options_set_compression_options(
+            ffi::rocksdb_silk_options_set_compression_options(
                 self.inner,
                 w_bits,
                 level,
@@ -784,7 +784,7 @@ impl Options {
     /// Default: `0`
     pub fn set_compaction_readahead_size(&mut self, compaction_readahead_size: usize) {
         unsafe {
-            ffi::rocksdb_options_compaction_readahead_size(
+            ffi::rocksdb_silk_options_compaction_readahead_size(
                 self.inner,
                 compaction_readahead_size as usize,
             );
@@ -798,7 +798,7 @@ impl Options {
     /// Default: false.
     pub fn set_level_compaction_dynamic_level_bytes(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_options_set_level_compaction_dynamic_level_bytes(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_options_set_level_compaction_dynamic_level_bytes(self.inner, v as c_uchar);
         }
     }
 
@@ -815,7 +815,7 @@ impl Options {
         });
 
         unsafe {
-            let mo = ffi::rocksdb_mergeoperator_create(
+            let mo = ffi::rocksdb_silk_mergeoperator_create(
                 mem::transmute(cb),
                 Some(merge_operator::destructor_callback),
                 Some(full_merge_callback),
@@ -823,7 +823,7 @@ impl Options {
                 Some(merge_operator::delete_callback),
                 Some(merge_operator::name_callback),
             );
-            ffi::rocksdb_options_set_merge_operator(self.inner, mo);
+            ffi::rocksdb_silk_options_set_merge_operator(self.inner, mo);
         }
     }
 
@@ -855,13 +855,13 @@ impl Options {
         });
 
         unsafe {
-            let cf = ffi::rocksdb_compactionfilter_create(
+            let cf = ffi::rocksdb_silk_compactionfilter_create(
                 mem::transmute(cb),
                 Some(compaction_filter::destructor_callback::<CompactionFilterCallback<F>>),
                 Some(compaction_filter::filter_callback::<CompactionFilterCallback<F>>),
                 Some(compaction_filter::name_callback::<CompactionFilterCallback<F>>),
             );
-            ffi::rocksdb_options_set_compaction_filter(self.inner, cf);
+            ffi::rocksdb_silk_options_set_compaction_filter(self.inner, cf);
         }
     }
 
@@ -880,14 +880,14 @@ impl Options {
         let factory = Box::new(factory);
 
         unsafe {
-            let cff = ffi::rocksdb_compactionfilterfactory_create(
+            let cff = ffi::rocksdb_silk_compactionfilterfactory_create(
                 Box::into_raw(factory) as *mut c_void,
                 Some(compaction_filter_factory::destructor_callback::<F>),
                 Some(compaction_filter_factory::create_compaction_filter_callback::<F>),
                 Some(compaction_filter_factory::name_callback::<F>),
             );
 
-            ffi::rocksdb_options_set_compaction_filter_factory(self.inner, cff);
+            ffi::rocksdb_silk_options_set_compaction_filter_factory(self.inner, cff);
         }
     }
 
@@ -904,18 +904,18 @@ impl Options {
         });
 
         unsafe {
-            let cmp = ffi::rocksdb_comparator_create(
+            let cmp = ffi::rocksdb_silk_comparator_create(
                 mem::transmute(cb),
                 Some(comparator::destructor_callback),
                 Some(comparator::compare_callback),
                 Some(comparator::name_callback),
             );
-            ffi::rocksdb_options_set_comparator(self.inner, cmp);
+            ffi::rocksdb_silk_options_set_comparator(self.inner, cmp);
         }
     }
 
     pub fn set_prefix_extractor(&mut self, prefix_extractor: SliceTransform) {
-        unsafe { ffi::rocksdb_options_set_prefix_extractor(self.inner, prefix_extractor.inner) }
+        unsafe { ffi::rocksdb_silk_options_set_prefix_extractor(self.inner, prefix_extractor.inner) }
     }
 
     #[deprecated(
@@ -928,7 +928,7 @@ impl Options {
 
     pub fn optimize_for_point_lookup(&mut self, cache_size: u64) {
         unsafe {
-            ffi::rocksdb_options_optimize_for_point_lookup(self.inner, cache_size);
+            ffi::rocksdb_silk_options_optimize_for_point_lookup(self.inner, cache_size);
         }
     }
 
@@ -946,7 +946,7 @@ impl Options {
     /// ```
     pub fn set_optimize_filters_for_hits(&mut self, optimize_for_hits: bool) {
         unsafe {
-            ffi::rocksdb_options_set_optimize_filters_for_hits(
+            ffi::rocksdb_silk_options_set_optimize_filters_for_hits(
                 self.inner,
                 optimize_for_hits as c_int,
             );
@@ -962,7 +962,7 @@ impl Options {
     /// Default: 6 hours
     pub fn set_delete_obsolete_files_period_micros(&mut self, micros: u64) {
         unsafe {
-            ffi::rocksdb_options_set_delete_obsolete_files_period_micros(self.inner, micros);
+            ffi::rocksdb_silk_options_set_delete_obsolete_files_period_micros(self.inner, micros);
         }
     }
 
@@ -973,7 +973,7 @@ impl Options {
     /// from the database, because otherwise the read can be very slow.
     pub fn prepare_for_bulk_load(&mut self) {
         unsafe {
-            ffi::rocksdb_options_prepare_for_bulk_load(self.inner);
+            ffi::rocksdb_silk_options_prepare_for_bulk_load(self.inner);
         }
     }
 
@@ -995,7 +995,7 @@ impl Options {
     /// ```
     pub fn set_max_open_files(&mut self, nfiles: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_max_open_files(self.inner, nfiles);
+            ffi::rocksdb_silk_options_set_max_open_files(self.inner, nfiles);
         }
     }
 
@@ -1004,7 +1004,7 @@ impl Options {
     /// Default: 16
     pub fn set_max_file_opening_threads(&mut self, nthreads: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_max_file_opening_threads(self.inner, nthreads);
+            ffi::rocksdb_silk_options_set_max_file_opening_threads(self.inner, nthreads);
         }
     }
 
@@ -1024,7 +1024,7 @@ impl Options {
     /// opts.set_use_fsync(true);
     /// ```
     pub fn set_use_fsync(&mut self, useit: bool) {
-        unsafe { ffi::rocksdb_options_set_use_fsync(self.inner, useit as c_int) }
+        unsafe { ffi::rocksdb_silk_options_set_use_fsync(self.inner, useit as c_int) }
     }
 
     /// Specifies the absolute info LOG dir.
@@ -1038,7 +1038,7 @@ impl Options {
     pub fn set_db_log_dir<P: AsRef<Path>>(&mut self, path: P) {
         let p = CString::new(path.as_ref().to_string_lossy().as_bytes()).unwrap();
         unsafe {
-            ffi::rocksdb_options_set_db_log_dir(self.inner, p.as_ptr());
+            ffi::rocksdb_silk_options_set_db_log_dir(self.inner, p.as_ptr());
         }
     }
 
@@ -1066,7 +1066,7 @@ impl Options {
     /// ```
     pub fn set_bytes_per_sync(&mut self, nbytes: u64) {
         unsafe {
-            ffi::rocksdb_options_set_bytes_per_sync(self.inner, nbytes);
+            ffi::rocksdb_silk_options_set_bytes_per_sync(self.inner, nbytes);
         }
     }
 
@@ -1089,7 +1089,7 @@ impl Options {
     /// ```
     pub fn set_allow_concurrent_memtable_write(&mut self, allow: bool) {
         unsafe {
-            ffi::rocksdb_options_set_allow_concurrent_memtable_write(self.inner, allow as c_uchar)
+            ffi::rocksdb_silk_options_set_allow_concurrent_memtable_write(self.inner, allow as c_uchar)
         }
     }
 
@@ -1101,7 +1101,7 @@ impl Options {
     /// Default: true
     pub fn set_enable_write_thread_adaptive_yield(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_enable_write_thread_adaptive_yield(
+            ffi::rocksdb_silk_options_set_enable_write_thread_adaptive_yield(
                 self.inner,
                 enabled as c_uchar,
             );
@@ -1116,7 +1116,7 @@ impl Options {
     /// Default: 8
     pub fn set_max_sequential_skip_in_iterations(&mut self, num: u64) {
         unsafe {
-            ffi::rocksdb_options_set_max_sequential_skip_in_iterations(self.inner, num);
+            ffi::rocksdb_silk_options_set_max_sequential_skip_in_iterations(self.inner, num);
         }
     }
 
@@ -1140,7 +1140,7 @@ impl Options {
     /// ```
     pub fn set_use_direct_reads(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_use_direct_reads(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_use_direct_reads(self.inner, enabled as c_uchar);
         }
     }
 
@@ -1164,7 +1164,7 @@ impl Options {
     /// ```
     pub fn set_use_direct_io_for_flush_and_compaction(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_use_direct_io_for_flush_and_compaction(
+            ffi::rocksdb_silk_options_set_use_direct_io_for_flush_and_compaction(
                 self.inner,
                 enabled as c_uchar,
             );
@@ -1176,7 +1176,7 @@ impl Options {
     /// Default: true
     pub fn set_is_fd_close_on_exec(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_is_fd_close_on_exec(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_is_fd_close_on_exec(self.inner, enabled as c_uchar);
         }
     }
 
@@ -1187,7 +1187,7 @@ impl Options {
     #[deprecated(since = "0.15.0", note = "This option is no longer used")]
     pub fn set_skip_log_error_on_recovery(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_skip_log_error_on_recovery(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_skip_log_error_on_recovery(self.inner, enabled as c_uchar);
         }
     }
 
@@ -1242,7 +1242,7 @@ impl Options {
     /// ```
     pub fn set_table_cache_num_shard_bits(&mut self, nbits: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_table_cache_numshardbits(self.inner, nbits);
+            ffi::rocksdb_silk_options_set_table_cache_numshardbits(self.inner, nbits);
         }
     }
 
@@ -1252,7 +1252,7 @@ impl Options {
     /// Dynamically changeable through SetOptions() API
     pub fn set_target_file_size_multiplier(&mut self, multiplier: i32) {
         unsafe {
-            ffi::rocksdb_options_set_target_file_size_multiplier(self.inner, multiplier as c_int)
+            ffi::rocksdb_silk_options_set_target_file_size_multiplier(self.inner, multiplier as c_int)
         }
     }
 
@@ -1276,7 +1276,7 @@ impl Options {
     /// ```
     pub fn set_min_write_buffer_number(&mut self, nbuf: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_min_write_buffer_number_to_merge(self.inner, nbuf);
+            ffi::rocksdb_silk_options_set_min_write_buffer_number_to_merge(self.inner, nbuf);
         }
     }
 
@@ -1300,7 +1300,7 @@ impl Options {
     /// ```
     pub fn set_max_write_buffer_number(&mut self, nbuf: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_max_write_buffer_number(self.inner, nbuf);
+            ffi::rocksdb_silk_options_set_max_write_buffer_number(self.inner, nbuf);
         }
     }
 
@@ -1331,7 +1331,7 @@ impl Options {
     /// ```
     pub fn set_write_buffer_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_write_buffer_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_write_buffer_size(self.inner, size);
         }
     }
 
@@ -1356,7 +1356,7 @@ impl Options {
     /// ```
     pub fn set_db_write_buffer_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_db_write_buffer_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_db_write_buffer_size(self.inner, size);
         }
     }
 
@@ -1383,7 +1383,7 @@ impl Options {
     /// ```
     pub fn set_max_bytes_for_level_base(&mut self, size: u64) {
         unsafe {
-            ffi::rocksdb_options_set_max_bytes_for_level_base(self.inner, size);
+            ffi::rocksdb_silk_options_set_max_bytes_for_level_base(self.inner, size);
         }
     }
 
@@ -1399,7 +1399,7 @@ impl Options {
     /// ```
     pub fn set_max_bytes_for_level_multiplier(&mut self, mul: f64) {
         unsafe {
-            ffi::rocksdb_options_set_max_bytes_for_level_multiplier(self.inner, mul);
+            ffi::rocksdb_silk_options_set_max_bytes_for_level_multiplier(self.inner, mul);
         }
     }
 
@@ -1417,7 +1417,7 @@ impl Options {
     /// ```
     pub fn set_max_manifest_file_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_max_manifest_file_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_max_manifest_file_size(self.inner, size);
         }
     }
 
@@ -1444,7 +1444,7 @@ impl Options {
     /// ```
     pub fn set_target_file_size_base(&mut self, size: u64) {
         unsafe {
-            ffi::rocksdb_options_set_target_file_size_base(self.inner, size);
+            ffi::rocksdb_silk_options_set_target_file_size_base(self.inner, size);
         }
     }
 
@@ -1468,7 +1468,7 @@ impl Options {
     /// ```
     pub fn set_min_write_buffer_number_to_merge(&mut self, to_merge: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_min_write_buffer_number_to_merge(self.inner, to_merge);
+            ffi::rocksdb_silk_options_set_min_write_buffer_number_to_merge(self.inner, to_merge);
         }
     }
 
@@ -1489,7 +1489,7 @@ impl Options {
     /// ```
     pub fn set_level_zero_file_num_compaction_trigger(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_level0_file_num_compaction_trigger(self.inner, n);
+            ffi::rocksdb_silk_options_set_level0_file_num_compaction_trigger(self.inner, n);
         }
     }
 
@@ -1511,7 +1511,7 @@ impl Options {
     /// ```
     pub fn set_level_zero_slowdown_writes_trigger(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_level0_slowdown_writes_trigger(self.inner, n);
+            ffi::rocksdb_silk_options_set_level0_slowdown_writes_trigger(self.inner, n);
         }
     }
 
@@ -1531,7 +1531,7 @@ impl Options {
     /// ```
     pub fn set_level_zero_stop_writes_trigger(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_level0_stop_writes_trigger(self.inner, n);
+            ffi::rocksdb_silk_options_set_level0_stop_writes_trigger(self.inner, n);
         }
     }
 
@@ -1549,21 +1549,21 @@ impl Options {
     /// ```
     pub fn set_compaction_style(&mut self, style: DBCompactionStyle) {
         unsafe {
-            ffi::rocksdb_options_set_compaction_style(self.inner, style as c_int);
+            ffi::rocksdb_silk_options_set_compaction_style(self.inner, style as c_int);
         }
     }
 
     /// Sets the options needed to support Universal Style compactions.
     pub fn set_universal_compaction_options(&mut self, uco: &UniversalCompactOptions) {
         unsafe {
-            ffi::rocksdb_options_set_universal_compaction_options(self.inner, uco.inner);
+            ffi::rocksdb_silk_options_set_universal_compaction_options(self.inner, uco.inner);
         }
     }
 
     /// Sets the options for FIFO compaction style.
     pub fn set_fifo_compaction_options(&mut self, fco: &FifoCompactOptions) {
         unsafe {
-            ffi::rocksdb_options_set_fifo_compaction_options(self.inner, fco.inner);
+            ffi::rocksdb_silk_options_set_fifo_compaction_options(self.inner, fco.inner);
         }
     }
 
@@ -1594,7 +1594,7 @@ impl Options {
     )]
     pub fn set_max_background_compactions(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_max_background_compactions(self.inner, n);
+            ffi::rocksdb_silk_options_set_max_background_compactions(self.inner, n);
         }
     }
 
@@ -1629,7 +1629,7 @@ impl Options {
     )]
     pub fn set_max_background_flushes(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_max_background_flushes(self.inner, n);
+            ffi::rocksdb_silk_options_set_max_background_flushes(self.inner, n);
         }
     }
 
@@ -1649,7 +1649,7 @@ impl Options {
     /// opts.set_disable_auto_compactions(true);
     /// ```
     pub fn set_disable_auto_compactions(&mut self, disable: bool) {
-        unsafe { ffi::rocksdb_options_set_disable_auto_compactions(self.inner, disable as c_int) }
+        unsafe { ffi::rocksdb_silk_options_set_disable_auto_compactions(self.inner, disable as c_int) }
     }
 
     /// SetMemtableHugePageSize sets the page size for huge page for
@@ -1664,7 +1664,7 @@ impl Options {
     ///
     /// Dynamically changeable through SetOptions() API
     pub fn set_memtable_huge_page_size(&mut self, size: size_t) {
-        unsafe { ffi::rocksdb_options_set_memtable_huge_page_size(self.inner, size) }
+        unsafe { ffi::rocksdb_silk_options_set_memtable_huge_page_size(self.inner, size) }
     }
 
     /// Sets the maximum number of successive merge operations on a key in the memtable.
@@ -1678,7 +1678,7 @@ impl Options {
     /// Default: 0 (disabled)
     pub fn set_max_successive_merges(&mut self, num: usize) {
         unsafe {
-            ffi::rocksdb_options_set_max_successive_merges(self.inner, num);
+            ffi::rocksdb_silk_options_set_max_successive_merges(self.inner, num);
         }
     }
 
@@ -1695,7 +1695,7 @@ impl Options {
     /// Default: 0
     pub fn set_bloom_locality(&mut self, v: u32) {
         unsafe {
-            ffi::rocksdb_options_set_bloom_locality(self.inner, v);
+            ffi::rocksdb_silk_options_set_bloom_locality(self.inner, v);
         }
     }
 
@@ -1709,7 +1709,7 @@ impl Options {
     /// Default: false.
     pub fn set_inplace_update_support(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_inplace_update_support(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_inplace_update_support(self.inner, enabled as c_uchar);
         }
     }
 
@@ -1718,7 +1718,7 @@ impl Options {
     /// Default: 10000 when inplace_update_support = true, otherwise 0.
     pub fn set_inplace_update_locks(&mut self, num: usize) {
         unsafe {
-            ffi::rocksdb_options_set_inplace_update_num_locks(self.inner, num);
+            ffi::rocksdb_silk_options_set_inplace_update_num_locks(self.inner, num);
         }
     }
 
@@ -1732,7 +1732,7 @@ impl Options {
     pub fn set_max_bytes_for_level_multiplier_additional(&mut self, level_values: &[i32]) {
         let count = level_values.len();
         unsafe {
-            ffi::rocksdb_options_set_max_bytes_for_level_multiplier_additional(
+            ffi::rocksdb_silk_options_set_max_bytes_for_level_multiplier_additional(
                 self.inner,
                 level_values.as_ptr() as *mut c_int,
                 count,
@@ -1761,14 +1761,14 @@ impl Options {
     pub fn set_memtable_factory(&mut self, factory: MemtableFactory) {
         match factory {
             MemtableFactory::Vector => unsafe {
-                ffi::rocksdb_options_set_memtable_vector_rep(self.inner);
+                ffi::rocksdb_silk_options_set_memtable_vector_rep(self.inner);
             },
             MemtableFactory::HashSkipList {
                 bucket_count,
                 height,
                 branching_factor,
             } => unsafe {
-                ffi::rocksdb_options_set_hash_skip_list_rep(
+                ffi::rocksdb_silk_options_set_hash_skip_list_rep(
                     self.inner,
                     bucket_count,
                     height,
@@ -1776,14 +1776,14 @@ impl Options {
                 );
             },
             MemtableFactory::HashLinkList { bucket_count } => unsafe {
-                ffi::rocksdb_options_set_hash_link_list_rep(self.inner, bucket_count);
+                ffi::rocksdb_silk_options_set_hash_link_list_rep(self.inner, bucket_count);
             },
         };
     }
 
     pub fn set_block_based_table_factory(&mut self, factory: &BlockBasedOptions) {
         unsafe {
-            ffi::rocksdb_options_set_block_based_table_factory(self.inner, factory.inner);
+            ffi::rocksdb_silk_options_set_block_based_table_factory(self.inner, factory.inner);
         }
     }
 
@@ -1812,7 +1812,7 @@ impl Options {
     /// ```
     pub fn set_plain_table_factory(&mut self, options: &PlainTableFactoryOptions) {
         unsafe {
-            ffi::rocksdb_options_set_plain_table_factory(
+            ffi::rocksdb_silk_options_set_plain_table_factory(
                 self.inner,
                 options.user_key_length,
                 options.bloom_bits_per_key,
@@ -1825,7 +1825,7 @@ impl Options {
     /// Sets the start level to use compression.
     pub fn set_min_level_to_compress(&mut self, lvl: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_min_level_to_compress(self.inner, lvl);
+            ffi::rocksdb_silk_options_set_min_level_to_compress(self.inner, lvl);
         }
     }
 
@@ -1843,7 +1843,7 @@ impl Options {
     /// ```
     pub fn set_report_bg_io_stats(&mut self, enable: bool) {
         unsafe {
-            ffi::rocksdb_options_set_report_bg_io_stats(self.inner, enable as c_int);
+            ffi::rocksdb_silk_options_set_report_bg_io_stats(self.inner, enable as c_int);
         }
     }
 
@@ -1864,7 +1864,7 @@ impl Options {
     /// ```
     pub fn set_max_total_wal_size(&mut self, size: u64) {
         unsafe {
-            ffi::rocksdb_options_set_max_total_wal_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_max_total_wal_size(self.inner, size);
         }
     }
 
@@ -1882,19 +1882,19 @@ impl Options {
     /// ```
     pub fn set_wal_recovery_mode(&mut self, mode: DBRecoveryMode) {
         unsafe {
-            ffi::rocksdb_options_set_wal_recovery_mode(self.inner, mode as c_int);
+            ffi::rocksdb_silk_options_set_wal_recovery_mode(self.inner, mode as c_int);
         }
     }
 
     pub fn enable_statistics(&mut self) {
         unsafe {
-            ffi::rocksdb_options_enable_statistics(self.inner);
+            ffi::rocksdb_silk_options_enable_statistics(self.inner);
         }
     }
 
     pub fn get_statistics(&self) -> Option<String> {
         unsafe {
-            let value = ffi::rocksdb_options_statistics_get_string(self.inner);
+            let value = ffi::rocksdb_silk_options_statistics_get_string(self.inner);
             if value.is_null() {
                 return None;
             }
@@ -1920,7 +1920,7 @@ impl Options {
     /// ```
     pub fn set_stats_dump_period_sec(&mut self, period: c_uint) {
         unsafe {
-            ffi::rocksdb_options_set_stats_dump_period_sec(self.inner, period);
+            ffi::rocksdb_silk_options_set_stats_dump_period_sec(self.inner, period);
         }
     }
 
@@ -1930,7 +1930,7 @@ impl Options {
     ///
     /// Default: `true`
     pub fn set_advise_random_on_open(&mut self, advise: bool) {
-        unsafe { ffi::rocksdb_options_set_advise_random_on_open(self.inner, advise as c_uchar) }
+        unsafe { ffi::rocksdb_silk_options_set_advise_random_on_open(self.inner, advise as c_uchar) }
     }
 
     /// Specifies the file access pattern once a compaction is started.
@@ -1940,7 +1940,7 @@ impl Options {
     /// Default: Normal
     pub fn set_access_hint_on_compaction_start(&mut self, pattern: AccessHint) {
         unsafe {
-            ffi::rocksdb_options_set_access_hint_on_compaction_start(self.inner, pattern as c_int);
+            ffi::rocksdb_silk_options_set_access_hint_on_compaction_start(self.inner, pattern as c_int);
         }
     }
 
@@ -1953,14 +1953,14 @@ impl Options {
     /// Default: false
     pub fn set_use_adaptive_mutex(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_use_adaptive_mutex(self.inner, enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_use_adaptive_mutex(self.inner, enabled as c_uchar);
         }
     }
 
     /// Sets the number of levels for this database.
     pub fn set_num_levels(&mut self, n: c_int) {
         unsafe {
-            ffi::rocksdb_options_set_num_levels(self.inner, n);
+            ffi::rocksdb_silk_options_set_num_levels(self.inner, n);
         }
     }
 
@@ -1982,7 +1982,7 @@ impl Options {
     /// ```
     pub fn set_memtable_prefix_bloom_ratio(&mut self, ratio: f64) {
         unsafe {
-            ffi::rocksdb_options_set_memtable_prefix_bloom_size_ratio(self.inner, ratio);
+            ffi::rocksdb_silk_options_set_memtable_prefix_bloom_size_ratio(self.inner, ratio);
         }
     }
 
@@ -2002,7 +2002,7 @@ impl Options {
     pub fn set_wal_dir<P: AsRef<Path>>(&mut self, path: P) {
         let p = CString::new(path.as_ref().to_string_lossy().as_bytes()).unwrap();
         unsafe {
-            ffi::rocksdb_options_set_wal_dir(self.inner, p.as_ptr());
+            ffi::rocksdb_silk_options_set_wal_dir(self.inner, p.as_ptr());
         }
     }
 
@@ -2024,7 +2024,7 @@ impl Options {
     /// Default: 0
     pub fn set_wal_ttl_seconds(&mut self, secs: u64) {
         unsafe {
-            ffi::rocksdb_options_set_WAL_ttl_seconds(self.inner, secs);
+            ffi::rocksdb_silk_options_set_WAL_ttl_seconds(self.inner, secs);
         }
     }
 
@@ -2036,7 +2036,7 @@ impl Options {
     /// Default: 0
     pub fn set_wal_size_limit_mb(&mut self, size: u64) {
         unsafe {
-            ffi::rocksdb_options_set_WAL_size_limit_MB(self.inner, size);
+            ffi::rocksdb_silk_options_set_WAL_size_limit_MB(self.inner, size);
         }
     }
 
@@ -2047,7 +2047,7 @@ impl Options {
     /// large amounts of data (such as xfs's allocsize option).
     pub fn set_manifest_preallocation_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_manifest_preallocation_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_manifest_preallocation_size(self.inner, size);
         }
     }
 
@@ -2056,7 +2056,7 @@ impl Options {
     /// Default: true
     pub fn set_purge_redundant_kvs_while_flush(&mut self, enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_purge_redundant_kvs_while_flush(
+            ffi::rocksdb_silk_options_set_purge_redundant_kvs_while_flush(
                 self.inner,
                 enabled as c_uchar,
             );
@@ -2077,7 +2077,7 @@ impl Options {
     /// ```
     pub fn set_keep_log_file_num(&mut self, nfiles: usize) {
         unsafe {
-            ffi::rocksdb_options_set_keep_log_file_num(self.inner, nfiles);
+            ffi::rocksdb_silk_options_set_keep_log_file_num(self.inner, nfiles);
         }
     }
 
@@ -2095,7 +2095,7 @@ impl Options {
     /// ```
     pub fn set_allow_mmap_writes(&mut self, is_enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_allow_mmap_writes(self.inner, is_enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_allow_mmap_writes(self.inner, is_enabled as c_uchar);
         }
     }
 
@@ -2113,7 +2113,7 @@ impl Options {
     /// ```
     pub fn set_allow_mmap_reads(&mut self, is_enabled: bool) {
         unsafe {
-            ffi::rocksdb_options_set_allow_mmap_reads(self.inner, is_enabled as c_uchar);
+            ffi::rocksdb_silk_options_set_allow_mmap_reads(self.inner, is_enabled as c_uchar);
         }
     }
 
@@ -2139,10 +2139,10 @@ impl Options {
     ) {
         unsafe {
             let ratelimiter =
-                ffi::rocksdb_ratelimiter_create(rate_bytes_per_sec, refill_period_us, fairness);
+                ffi::rocksdb_silk_ratelimiter_create(rate_bytes_per_sec, refill_period_us, fairness);
             // Since limiter is wrapped in shared_ptr, we don't need to
-            // call rocksdb_ratelimiter_destroy explicitly.
-            ffi::rocksdb_options_set_ratelimiter(self.inner, ratelimiter);
+            // call rocksdb_silk_ratelimiter_destroy explicitly.
+            ffi::rocksdb_silk_options_set_ratelimiter(self.inner, ratelimiter);
         }
     }
 
@@ -2164,7 +2164,7 @@ impl Options {
     /// ```
     pub fn set_max_log_file_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_max_log_file_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_max_log_file_size(self.inner, size);
         }
     }
 
@@ -2175,7 +2175,7 @@ impl Options {
     /// Default: 0 (disabled)
     pub fn set_log_file_time_to_roll(&mut self, secs: usize) {
         unsafe {
-            ffi::rocksdb_options_set_log_file_time_to_roll(self.inner, secs);
+            ffi::rocksdb_silk_options_set_log_file_time_to_roll(self.inner, secs);
         }
     }
 
@@ -2199,7 +2199,7 @@ impl Options {
     /// ```
     pub fn set_recycle_log_file_num(&mut self, num: usize) {
         unsafe {
-            ffi::rocksdb_options_set_recycle_log_file_num(self.inner, num);
+            ffi::rocksdb_silk_options_set_recycle_log_file_num(self.inner, num);
         }
     }
 
@@ -2213,7 +2213,7 @@ impl Options {
     /// Default: 0.0 (disabled)
     pub fn set_soft_rate_limit(&mut self, limit: f64) {
         unsafe {
-            ffi::rocksdb_options_set_soft_rate_limit(self.inner, limit);
+            ffi::rocksdb_silk_options_set_soft_rate_limit(self.inner, limit);
         }
     }
 
@@ -2225,7 +2225,7 @@ impl Options {
     /// Default: 0.0 (disabled)
     pub fn set_hard_rate_limit(&mut self, limit: f64) {
         unsafe {
-            ffi::rocksdb_options_set_hard_rate_limit(self.inner, limit);
+            ffi::rocksdb_silk_options_set_hard_rate_limit(self.inner, limit);
         }
     }
 
@@ -2235,7 +2235,7 @@ impl Options {
     /// Default: 64GB
     pub fn set_soft_pending_compaction_bytes_limit(&mut self, limit: usize) {
         unsafe {
-            ffi::rocksdb_options_set_soft_pending_compaction_bytes_limit(self.inner, limit);
+            ffi::rocksdb_silk_options_set_soft_pending_compaction_bytes_limit(self.inner, limit);
         }
     }
 
@@ -2245,7 +2245,7 @@ impl Options {
     /// Default: 256GB
     pub fn set_hard_pending_compaction_bytes_limit(&mut self, limit: usize) {
         unsafe {
-            ffi::rocksdb_options_set_hard_pending_compaction_bytes_limit(self.inner, limit);
+            ffi::rocksdb_silk_options_set_hard_pending_compaction_bytes_limit(self.inner, limit);
         }
     }
 
@@ -2255,7 +2255,7 @@ impl Options {
     /// Default: 1000
     pub fn set_rate_limit_delay_max_milliseconds(&mut self, millis: c_uint) {
         unsafe {
-            ffi::rocksdb_options_set_rate_limit_delay_max_milliseconds(self.inner, millis);
+            ffi::rocksdb_silk_options_set_rate_limit_delay_max_milliseconds(self.inner, millis);
         }
     }
 
@@ -2267,7 +2267,7 @@ impl Options {
     /// Default: 0
     pub fn set_arena_block_size(&mut self, size: usize) {
         unsafe {
-            ffi::rocksdb_options_set_arena_block_size(self.inner, size);
+            ffi::rocksdb_silk_options_set_arena_block_size(self.inner, size);
         }
     }
 }
@@ -2275,7 +2275,7 @@ impl Options {
 impl Default for Options {
     fn default() -> Options {
         unsafe {
-            let opts = ffi::rocksdb_options_create();
+            let opts = ffi::rocksdb_silk_options_create();
             if opts.is_null() {
                 panic!("Could not create RocksDB options");
             }
@@ -2303,14 +2303,14 @@ impl FlushOptions {
     /// ```
     pub fn set_wait(&mut self, wait: bool) {
         unsafe {
-            ffi::rocksdb_flushoptions_set_wait(self.inner, wait as c_uchar);
+            ffi::rocksdb_silk_flushoptions_set_wait(self.inner, wait as c_uchar);
         }
     }
 }
 
 impl Default for FlushOptions {
     fn default() -> FlushOptions {
-        let flush_opts = unsafe { ffi::rocksdb_flushoptions_create() };
+        let flush_opts = unsafe { ffi::rocksdb_silk_flushoptions_create() };
         if flush_opts.is_null() {
             panic!("Could not create RocksDB flush options");
         }
@@ -2330,7 +2330,7 @@ impl WriteOptions {
     /// Default: false
     pub fn set_sync(&mut self, sync: bool) {
         unsafe {
-            ffi::rocksdb_writeoptions_set_sync(self.inner, sync as c_uchar);
+            ffi::rocksdb_silk_writeoptions_set_sync(self.inner, sync as c_uchar);
         }
     }
 
@@ -2341,14 +2341,14 @@ impl WriteOptions {
     /// Default: false
     pub fn disable_wal(&mut self, disable: bool) {
         unsafe {
-            ffi::rocksdb_writeoptions_disable_WAL(self.inner, disable as c_int);
+            ffi::rocksdb_silk_writeoptions_disable_WAL(self.inner, disable as c_int);
         }
     }
 }
 
 impl Default for WriteOptions {
     fn default() -> WriteOptions {
-        let write_opts = unsafe { ffi::rocksdb_writeoptions_create() };
+        let write_opts = unsafe { ffi::rocksdb_silk_writeoptions_create() };
         if write_opts.is_null() {
             panic!("Could not create RocksDB write options");
         }
@@ -2377,7 +2377,7 @@ impl ReadOptions {
     /// Default: true
     pub fn fill_cache(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_readoptions_set_fill_cache(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_readoptions_set_fill_cache(self.inner, v as c_uchar);
         }
     }
 
@@ -2386,7 +2386,7 @@ impl ReadOptions {
     /// not have been released.
     pub(crate) fn set_snapshot(&mut self, snapshot: &Snapshot) {
         unsafe {
-            ffi::rocksdb_readoptions_set_snapshot(self.inner, snapshot.inner);
+            ffi::rocksdb_silk_readoptions_set_snapshot(self.inner, snapshot.inner);
         }
     }
 
@@ -2400,7 +2400,7 @@ impl ReadOptions {
             .expect("iterate_upper_bound must exist.");
 
         unsafe {
-            ffi::rocksdb_readoptions_set_iterate_upper_bound(
+            ffi::rocksdb_silk_readoptions_set_iterate_upper_bound(
                 self.inner,
                 upper_bound.as_ptr() as *const c_char,
                 upper_bound.len() as size_t,
@@ -2415,7 +2415,7 @@ impl ReadOptions {
     /// Default: ::All
     pub fn set_read_tier(&mut self, tier: ReadTier) {
         unsafe {
-            ffi::rocksdb_readoptions_set_read_tier(self.inner, tier as c_int);
+            ffi::rocksdb_silk_readoptions_set_read_tier(self.inner, tier as c_int);
         }
     }
 
@@ -2427,7 +2427,7 @@ impl ReadOptions {
     /// block based table. It provides a way to read existing data after
     /// changing implementation of prefix extractor.
     pub fn set_total_order_seek(&mut self, v: bool) {
-        unsafe { ffi::rocksdb_readoptions_set_total_order_seek(self.inner, v as c_uchar) }
+        unsafe { ffi::rocksdb_silk_readoptions_set_total_order_seek(self.inner, v as c_uchar) }
     }
 
     /// If true, all data read from underlying storage will be
@@ -2436,7 +2436,7 @@ impl ReadOptions {
     /// Default: true
     pub fn set_verify_checksums(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_readoptions_set_verify_checksums(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_readoptions_set_verify_checksums(self.inner, v as c_uchar);
         }
     }
 
@@ -2453,7 +2453,7 @@ impl ReadOptions {
     /// ```
     pub fn set_readahead_size(&mut self, v: usize) {
         unsafe {
-            ffi::rocksdb_readoptions_set_readahead_size(self.inner, v as size_t);
+            ffi::rocksdb_silk_readoptions_set_readahead_size(self.inner, v as size_t);
         }
     }
 
@@ -2462,7 +2462,7 @@ impl ReadOptions {
     /// or seek_to_last are not supported.
     pub fn set_tailing(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_readoptions_set_tailing(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_readoptions_set_tailing(self.inner, v as c_uchar);
         }
     }
 
@@ -2476,7 +2476,7 @@ impl ReadOptions {
     /// Default: false
     pub fn set_pin_data(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_readoptions_set_pin_data(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_readoptions_set_pin_data(self.inner, v as c_uchar);
         }
     }
 }
@@ -2485,7 +2485,7 @@ impl Default for ReadOptions {
     fn default() -> ReadOptions {
         unsafe {
             ReadOptions {
-                inner: ffi::rocksdb_readoptions_create(),
+                inner: ffi::rocksdb_silk_readoptions_create(),
                 iterate_upper_bound: None,
             }
         }
@@ -2496,7 +2496,7 @@ impl IngestExternalFileOptions {
     /// Can be set to true to move the files instead of copying them.
     pub fn set_move_files(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_ingestexternalfileoptions_set_move_files(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_ingestexternalfileoptions_set_move_files(self.inner, v as c_uchar);
         }
     }
 
@@ -2504,7 +2504,7 @@ impl IngestExternalFileOptions {
     /// that where created before the file was ingested.
     pub fn set_snapshot_consistency(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_ingestexternalfileoptions_set_snapshot_consistency(
+            ffi::rocksdb_silk_ingestexternalfileoptions_set_snapshot_consistency(
                 self.inner,
                 v as c_uchar,
             );
@@ -2515,7 +2515,7 @@ impl IngestExternalFileOptions {
     /// overlaps with existing keys or tombstones in the DB.
     pub fn set_allow_global_seqno(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_ingestexternalfileoptions_set_allow_global_seqno(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_ingestexternalfileoptions_set_allow_global_seqno(self.inner, v as c_uchar);
         }
     }
 
@@ -2523,7 +2523,7 @@ impl IngestExternalFileOptions {
     /// (memtable flush required), IngestExternalFile will fail.
     pub fn set_allow_blocking_flush(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_ingestexternalfileoptions_set_allow_blocking_flush(
+            ffi::rocksdb_silk_ingestexternalfileoptions_set_allow_blocking_flush(
                 self.inner,
                 v as c_uchar,
             );
@@ -2535,7 +2535,7 @@ impl Default for IngestExternalFileOptions {
     fn default() -> IngestExternalFileOptions {
         unsafe {
             IngestExternalFileOptions {
-                inner: ffi::rocksdb_ingestexternalfileoptions_create(),
+                inner: ffi::rocksdb_silk_ingestexternalfileoptions_create(),
             }
         }
     }
@@ -2600,28 +2600,28 @@ pub struct PlainTableFactoryOptions {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DBCompressionType {
-    None = ffi::rocksdb_no_compression as isize,
-    Snappy = ffi::rocksdb_snappy_compression as isize,
-    Zlib = ffi::rocksdb_zlib_compression as isize,
-    Bz2 = ffi::rocksdb_bz2_compression as isize,
-    Lz4 = ffi::rocksdb_lz4_compression as isize,
-    Lz4hc = ffi::rocksdb_lz4hc_compression as isize,
-    Zstd = ffi::rocksdb_zstd_compression as isize,
+    None = ffi::rocksdb_silk_no_compression as isize,
+    Snappy = ffi::rocksdb_silk_snappy_compression as isize,
+    Zlib = ffi::rocksdb_silk_zlib_compression as isize,
+    Bz2 = ffi::rocksdb_silk_bz2_compression as isize,
+    Lz4 = ffi::rocksdb_silk_lz4_compression as isize,
+    Lz4hc = ffi::rocksdb_silk_lz4hc_compression as isize,
+    Zstd = ffi::rocksdb_silk_zstd_compression as isize,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DBCompactionStyle {
-    Level = ffi::rocksdb_level_compaction as isize,
-    Universal = ffi::rocksdb_universal_compaction as isize,
-    Fifo = ffi::rocksdb_fifo_compaction as isize,
+    Level = ffi::rocksdb_silk_level_compaction as isize,
+    Universal = ffi::rocksdb_silk_universal_compaction as isize,
+    Fifo = ffi::rocksdb_silk_fifo_compaction as isize,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DBRecoveryMode {
-    TolerateCorruptedTailRecords = ffi::rocksdb_tolerate_corrupted_tail_records_recovery as isize,
-    AbsoluteConsistency = ffi::rocksdb_absolute_consistency_recovery as isize,
-    PointInTime = ffi::rocksdb_point_in_time_recovery as isize,
-    SkipAnyCorruptedRecord = ffi::rocksdb_skip_any_corrupted_records_recovery as isize,
+    TolerateCorruptedTailRecords = ffi::rocksdb_silk_tolerate_corrupted_tail_records_recovery as isize,
+    AbsoluteConsistency = ffi::rocksdb_silk_absolute_consistency_recovery as isize,
+    PointInTime = ffi::rocksdb_silk_point_in_time_recovery as isize,
+    SkipAnyCorruptedRecord = ffi::rocksdb_silk_skip_any_corrupted_records_recovery as isize,
 }
 
 /// File access pattern once a compaction has started
@@ -2635,12 +2635,12 @@ pub enum AccessHint {
 }
 
 pub struct FifoCompactOptions {
-    pub(crate) inner: *mut ffi::rocksdb_fifo_compaction_options_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_fifo_compaction_options_t,
 }
 
 impl Default for FifoCompactOptions {
     fn default() -> FifoCompactOptions {
-        let opts = unsafe { ffi::rocksdb_fifo_compaction_options_create() };
+        let opts = unsafe { ffi::rocksdb_silk_fifo_compaction_options_create() };
         if opts.is_null() {
             panic!("Could not create RocksDB Fifo Compaction Options");
         }
@@ -2651,7 +2651,7 @@ impl Default for FifoCompactOptions {
 impl Drop for FifoCompactOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_fifo_compaction_options_destroy(self.inner);
+            ffi::rocksdb_silk_fifo_compaction_options_destroy(self.inner);
         }
     }
 }
@@ -2665,24 +2665,24 @@ impl FifoCompactOptions {
     /// Default: 1GB
     pub fn set_max_table_files_size(&mut self, nbytes: u64) {
         unsafe {
-            ffi::rocksdb_fifo_compaction_options_set_max_table_files_size(self.inner, nbytes);
+            ffi::rocksdb_silk_fifo_compaction_options_set_max_table_files_size(self.inner, nbytes);
         }
     }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum UniversalCompactionStopStyle {
-    Similar = ffi::rocksdb_similar_size_compaction_stop_style as isize,
-    Total = ffi::rocksdb_total_size_compaction_stop_style as isize,
+    Similar = ffi::rocksdb_silk_similar_size_compaction_stop_style as isize,
+    Total = ffi::rocksdb_silk_total_size_compaction_stop_style as isize,
 }
 
 pub struct UniversalCompactOptions {
-    pub(crate) inner: *mut ffi::rocksdb_universal_compaction_options_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_universal_compaction_options_t,
 }
 
 impl Default for UniversalCompactOptions {
     fn default() -> UniversalCompactOptions {
-        let opts = unsafe { ffi::rocksdb_universal_compaction_options_create() };
+        let opts = unsafe { ffi::rocksdb_silk_universal_compaction_options_create() };
         if opts.is_null() {
             panic!("Could not create RocksDB Universal Compaction Options");
         }
@@ -2693,7 +2693,7 @@ impl Default for UniversalCompactOptions {
 impl Drop for UniversalCompactOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_destroy(self.inner);
+            ffi::rocksdb_silk_universal_compaction_options_destroy(self.inner);
         }
     }
 }
@@ -2706,7 +2706,7 @@ impl UniversalCompactOptions {
     /// Default: 1
     pub fn set_size_ratio(&mut self, ratio: c_int) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_size_ratio(self.inner, ratio);
+            ffi::rocksdb_silk_universal_compaction_options_set_size_ratio(self.inner, ratio);
         }
     }
 
@@ -2715,7 +2715,7 @@ impl UniversalCompactOptions {
     /// Default: 2
     pub fn set_min_merge_width(&mut self, num: c_int) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_min_merge_width(self.inner, num);
+            ffi::rocksdb_silk_universal_compaction_options_set_min_merge_width(self.inner, num);
         }
     }
 
@@ -2724,7 +2724,7 @@ impl UniversalCompactOptions {
     /// Default: UINT_MAX
     pub fn set_max_merge_width(&mut self, num: c_int) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_max_merge_width(self.inner, num);
+            ffi::rocksdb_silk_universal_compaction_options_set_max_merge_width(self.inner, num);
         }
     }
 
@@ -2742,7 +2742,7 @@ impl UniversalCompactOptions {
     /// Default: 200, which means that a 100 byte database could require upto 300 bytes of storage.
     pub fn set_max_size_amplification_percent(&mut self, v: c_int) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_max_size_amplification_percent(
+            ffi::rocksdb_silk_universal_compaction_options_set_max_size_amplification_percent(
                 self.inner, v,
             );
         }
@@ -2769,7 +2769,7 @@ impl UniversalCompactOptions {
     /// Default: -1
     pub fn set_compression_size_percent(&mut self, v: c_int) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_compression_size_percent(self.inner, v);
+            ffi::rocksdb_silk_universal_compaction_options_set_compression_size_percent(self.inner, v);
         }
     }
 
@@ -2778,7 +2778,7 @@ impl UniversalCompactOptions {
     /// Default: ::Total
     pub fn set_stop_style(&mut self, style: UniversalCompactionStopStyle) {
         unsafe {
-            ffi::rocksdb_universal_compaction_options_set_stop_style(self.inner, style as c_int);
+            ffi::rocksdb_silk_universal_compaction_options_set_stop_style(self.inner, style as c_int);
         }
     }
 }
@@ -2799,12 +2799,12 @@ pub enum BottommostLevelCompaction {
 }
 
 pub struct CompactOptions {
-    pub(crate) inner: *mut ffi::rocksdb_compactoptions_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_compactoptions_t,
 }
 
 impl Default for CompactOptions {
     fn default() -> CompactOptions {
-        let opts = unsafe { ffi::rocksdb_compactoptions_create() };
+        let opts = unsafe { ffi::rocksdb_silk_compactoptions_create() };
         if opts.is_null() {
             panic!("Could not create RocksDB Compact Options");
         }
@@ -2815,7 +2815,7 @@ impl Default for CompactOptions {
 impl Drop for CompactOptions {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_compactoptions_destroy(self.inner);
+            ffi::rocksdb_silk_compactoptions_destroy(self.inner);
         }
     }
 }
@@ -2828,7 +2828,7 @@ impl CompactOptions {
     /// and wait for existing automatic compaction jobs to finish.
     pub fn set_exclusive_manual_compaction(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_compactoptions_set_exclusive_manual_compaction(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_compactoptions_set_exclusive_manual_compaction(self.inner, v as c_uchar);
         }
     }
 
@@ -2836,7 +2836,7 @@ impl CompactOptions {
     /// of holding the data or given level (specified non-negative target_level).
     pub fn set_change_level(&mut self, v: bool) {
         unsafe {
-            ffi::rocksdb_compactoptions_set_change_level(self.inner, v as c_uchar);
+            ffi::rocksdb_silk_compactoptions_set_change_level(self.inner, v as c_uchar);
         }
     }
 
@@ -2844,21 +2844,21 @@ impl CompactOptions {
     /// files will be moved to target_level.
     pub fn set_target_level(&mut self, lvl: c_int) {
         unsafe {
-            ffi::rocksdb_compactoptions_set_target_level(self.inner, lvl);
+            ffi::rocksdb_silk_compactoptions_set_target_level(self.inner, lvl);
         }
     }
 }
 
 /// Represents a path where sst files can be put into
 pub struct DBPath {
-    pub(crate) inner: *mut ffi::rocksdb_dbpath_t,
+    pub(crate) inner: *mut ffi::rocksdb_silk_dbpath_t,
 }
 
 impl DBPath {
     /// Create a new path
     pub fn new<P: AsRef<Path>>(path: P, target_size: u64) -> Result<Self, Error> {
         let p = CString::new(path.as_ref().to_string_lossy().as_bytes()).unwrap();
-        let dbpath = unsafe { ffi::rocksdb_dbpath_create(p.as_ptr(), target_size) };
+        let dbpath = unsafe { ffi::rocksdb_silk_dbpath_create(p.as_ptr(), target_size) };
         if dbpath.is_null() {
             Err(Error::new(format!(
                 "Could not create path for storing sst files at location: {}",
@@ -2873,7 +2873,7 @@ impl DBPath {
 impl Drop for DBPath {
     fn drop(&mut self) {
         unsafe {
-            ffi::rocksdb_dbpath_destroy(self.inner);
+            ffi::rocksdb_silk_dbpath_destroy(self.inner);
         }
     }
 }

@@ -24,11 +24,11 @@ use crate::ffi;
 /// to store prefix blooms by setting prefix_extractor in
 /// ColumnFamilyOptions.
 pub struct SliceTransform {
-    pub inner: *mut ffi::rocksdb_slicetransform_t,
+    pub inner: *mut ffi::rocksdb_silk_slicetransform_t,
 }
 
 // NB we intentionally don't implement a Drop that passes
-// through to rocksdb_slicetransform_destroy because
+// through to rocksdb_silk_slicetransform_destroy because
 // this is currently only used (to my knowledge)
 // by people passing it as a prefix extractor when
 // opening a DB.
@@ -46,7 +46,7 @@ impl SliceTransform {
         }));
 
         let st = unsafe {
-            ffi::rocksdb_slicetransform_create(
+            ffi::rocksdb_silk_slicetransform_create(
                 cb as *mut c_void,
                 Some(slice_transform_destructor_callback),
                 Some(transform_callback),
@@ -62,13 +62,13 @@ impl SliceTransform {
 
     pub fn create_fixed_prefix(len: size_t) -> SliceTransform {
         SliceTransform {
-            inner: unsafe { ffi::rocksdb_slicetransform_create_fixed_prefix(len) },
+            inner: unsafe { ffi::rocksdb_silk_slicetransform_create_fixed_prefix(len) },
         }
     }
 
     pub fn create_noop() -> SliceTransform {
         SliceTransform {
-            inner: unsafe { ffi::rocksdb_slicetransform_create_noop() },
+            inner: unsafe { ffi::rocksdb_silk_slicetransform_create_noop() },
         }
     }
 }
