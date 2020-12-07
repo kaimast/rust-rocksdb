@@ -313,6 +313,18 @@ impl DB {
         &self.path.as_path()
     }
 
+    pub fn pause_compaction_work(&self) {
+        unsafe {
+            ffi::rocksdb_silk_pause_compaction_work(self.inner);
+        }
+    }
+
+    pub fn continue_compaction_work(&self) {
+        unsafe {
+            ffi::rocksdb_silk_continue_compaction_work(self.inner);
+        }
+    }
+
     /// Flushes database memtables to SST files on the disk.
     pub fn flush_opt(&self, flushopts: &FlushOptions) -> Result<(), Error> {
         unsafe {
